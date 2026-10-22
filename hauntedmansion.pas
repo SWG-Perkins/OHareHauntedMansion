@@ -903,7 +903,7 @@ begin
 
   if finalScore < 1 then
   begin
-    Writeln('You must have nothing but space between youre ears!');
+    Writeln('You must have nothing but space between your ears!');
     Halt;
   end;
 
@@ -915,7 +915,7 @@ begin
 
   if finalScore < 75 then
   begin
-    Writeln('You''re score qualifies you as a novice class adventurer.');
+    Writeln('Your score qualifies you as a novice class adventurer.');
     Halt;
   end;
 
