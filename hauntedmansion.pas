@@ -27,6 +27,7 @@ var
   darkFlag, playerScore, ghostCount, ghostActive, ghostFlag, turnCount, hubieActive: Integer;
   verbIndex, nounIndex: Integer;               // parser results
   matchFound, matchedCommand, roomChanged, deathHappened, quitFlag, gameKilled: Integer;
+  displayRoom: Boolean;                        // true when we need to clear & show a room
 
   objectLocation : array[0..MaxObjects] of Integer; // -1=carried, 0=limbo, else room#
   objectSize: array[0..MaxObjects] of Integer;      // weight / carry flag
@@ -1450,8 +1451,10 @@ begin
   InitEvents;
 
   ShowTitleScreen;
+  ClrScr;                       // clear after title screen
   ShowInstructions;
   WaitForKey;
+  ClrScr;                       // clear after instructions
 
   SetupGame;
   PromptLoadGame;
@@ -1463,7 +1466,9 @@ begin
     Writeln('illegal time');
     timeString := '1200';
   end;
+  ClrScr;                       // clear after entering time
 
+  displayRoom := True;
   while True do
   begin
     if currentRoom = deathRoom then
@@ -1471,13 +1476,22 @@ begin
       CalculateScore;
       Break;
     end;
-    ShowRoomDescription;
-    if quitFlag = 1 then Break;
+
     if currentRoom = limboRoom then
     begin
       currentRoom := 1;
       playerScore := playerScore - 5;
+      displayRoom := True;      // arriving in limbo sends you to room 1; show it
     end;
+
+    if displayRoom then
+    begin
+      ClrScr;                   // clear only when entering a (new) room
+      ShowRoomDescription;
+      displayRoom := False;
+    end;
+
+    if quitFlag = 1 then Break;
     GameTurn;
     if deathHappened = 1 then
     begin
@@ -1490,6 +1504,7 @@ begin
     if roomChanged = 1 then
     begin
       roomChanged := 0;
+      displayRoom := True;      // schedule clear + room description for new room
       Continue;
     end;
   end;
