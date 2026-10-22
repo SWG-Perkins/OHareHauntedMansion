@@ -17,6 +17,7 @@ const
   MaxObjects = 78; // total objects (0..78)
   MaxMessages = 59;// system messages (1..59)
   MaxCommands = 91;// command/action table entries
+  ConsoleWidth = 80; // width of underscore separator line
 
 {------------------------------------------------------------------------------
   GAME STATE (globals)
@@ -1238,7 +1239,7 @@ procedure ShowRoomDescription;
 label
   ShowDescription;
 var
-  printHeader, itemsFound, exitIndex, itemIndex: Integer;
+  printHeader, itemsFound, exitIndex, itemIndex, lineIndex: Integer;
 {Print room name, visible items, and obvious exits.  Handle darkness.}
 begin
   darkFlag := 0;
@@ -1285,6 +1286,10 @@ ShowDescription:
     end;
     if roomExit[currentRoom, exitIndex] <> 0 then Write(verbTable[exitIndex + 1], ' ');
   end;
+  Writeln;
+  // Horizontal underscore line matching console width
+  for lineIndex := 1 to ConsoleWidth do
+    Write('_');
   Writeln;
   Writeln;
 end;
