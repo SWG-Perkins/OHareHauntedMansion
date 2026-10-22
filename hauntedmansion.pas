@@ -582,16 +582,19 @@ begin
     Writeln('You''re flashlight is getting dim!');
     lightFlag := 1;
   end;
+
   if (lightUnits < 38) and (lightFlag = 1) and (objectLocation[lightObject] <> 0) then
   begin
     Writeln('You''re flashlight is getting dimmer!!');
     lightFlag := 0;
   end;
+
   if (lightUnits < 25) and (lightUnits > 0) and (objectLocation[lightObject] <> 0) then
   begin
     Writeln;
     Writeln('LIGHT RUNS OUT IN ', lightUnits, ' TURNS!');
   end;
+
   if (lightUnits = 0) and (lightFlag = 0) then
   begin
     Writeln('LIGHT HAS RUN OUT!!!');
@@ -610,18 +613,23 @@ begin
     objectLocation[61] := 0;
     Exit;
   end;
+
   if (currentRoom < 8) or (currentRoom = limboRoom) or (currentRoom = deathRoom) or (turnCount < 35) then Exit;
+
   if ghostCount = 0 then Exit;
+
   if ghostActive = 1 then
   begin
     objectLocation[61] := currentRoom;
     goto L4030;
   end;
+
   if RandomRange(32) = 7 then
   begin
     ghostActive := 1;
     goto L3999;
   end;
+
   objectLocation[61] := 0;
   Exit;
 L4030:
@@ -649,6 +657,7 @@ begin
     Writeln('You missed!');
     Exit;
   end;
+
   Writeln('You got him!');
   Writeln('The ghost dissapears in a white mist!');
   ghostCount := ghostCount - 1;
@@ -662,6 +671,7 @@ procedure DescribeRoomEvents;
 begin
   if currentRoom = 27 then
     Writeln('A clock shows the time: ', Copy(timeString, 1, 2), ':', Copy(timeString, 3, 2));
+
   if hubieActive = 1 then
   begin
     Writeln('The spirit of Hubie Marsten appears and says:');
@@ -669,18 +679,23 @@ begin
     objectLocation[74] := currentRoom;
     hubieActive := 0;
   end;
+
   if (RandomRange(5) = 4) and (currentRoom > 6) then
     Writeln(eventMessage[RandomRange(7)], '.');
+
   if (currentRoom > 3) and (currentRoom < 7) and (RandomRange(4) = 2) then
     Writeln('The trees seem to be alive!');
+
   if (currentRoom > 32) and (currentRoom < 36) and (objectLocation[74] <> currentRoom) then
     if RandomRange(3) = 2 then hubieActive := 1;
+
   if (objectLocation[74] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The spirit vanished??');
     objectLocation[74] := 0;
     hubieActive := 0;
   end;
+
   if (objectLocation[54] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The goblin attack with an axe in hand!');
@@ -693,6 +708,7 @@ begin
     end;
     Writeln('WHOOSH!     He misses!');
   end;
+
   if (objectLocation[55] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The troll attacks!');
@@ -705,6 +721,7 @@ begin
     end;
     Writeln('He missed!');
   end;
+
   if (objectLocation[73] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('Barlow attacks!');
@@ -734,29 +751,35 @@ begin
     Writeln('IT''S BEYOND MY POWER TO DO THAT!');
     Exit;
   end;
+
   if objectSize[obj] > 1 then
   begin
     Writeln('Don''t be stupid!');
     Exit;
   end;
+
   if objectLocation[obj] = -1 then
   begin
     Writeln('I''m already carrying it.');
     Exit;
   end;
+
   if objectLocation[obj] <> currentRoom then
   begin
     Writeln('I DON''T SEE IT HERE!');
     Exit;
   end;
+
   carriedCount := 0;
   for carryIndex := 1 to MaxObjects do
     if objectLocation[carryIndex] = -1 then carriedCount := carriedCount + 1;
+
   if carriedCount + 1 > objectLimit then
   begin
     Writeln('I''VE TOO MUCH TO CARRY');
     Exit;
   end;
+
   Writeln('ok,');
   objectLocation[obj] := -1;
 end;
@@ -777,12 +800,14 @@ begin
       objectLocation[76] := currentRoom;
       Continue;
     end;
+
     if (treasureIndex = 52) and (objectLocation[treasureIndex] = -1) then
     begin
       Writeln(messageTable[43]);
       objectLocation[treasureIndex] := currentRoom;
       Continue;
     end;
+
     if objectLocation[treasureIndex] = -1 then
     begin
       objectLocation[treasureIndex] := currentRoom;
@@ -790,6 +815,7 @@ begin
       treasurePlaced := 1;
     end;
   end;
+
   if treasurePlaced = 0 then Writeln('You have no treasure to drop.');
 end;
 
@@ -818,6 +844,7 @@ begin
     carriedFlag := 1;
     Writeln(objectName[itemIndex], '.  ');
   end;
+
   if carriedFlag <> 0 then Writeln;
   if carriedFlag = 0 then Writeln('nothing');
 end;
@@ -830,6 +857,7 @@ begin
     Writeln('I CAN''T GO IN THAT DIRECTION.');
     Exit;
   end;
+
   if (roomExit[currentRoom, direction] = 0) and (darkFlag = 1) then
   begin
     Writeln('I FELL DOWN AND BROKE MY NECK!!');
@@ -837,16 +865,19 @@ begin
     playerScore := playerScore - 5;
     Exit;
   end;
+
   if (objectLocation[54] = currentRoom) and (direction = 1) then
   begin
     Writeln('The goblin won''t let me by!');
     Exit;
   end;
+
   if (objectLocation[55] = currentRoom) and (direction = 3) then
   begin
     Writeln('The troll is blocking my way!');
     Exit;
   end;
+
   currentRoom := roomExit[currentRoom, direction];
   roomChanged := 1;
 end;
@@ -864,61 +895,76 @@ begin
     if (Copy(objectName[i], Length(objectName[i]), 1) = '*') and (objectLocation[i] = treasureRoom) then
       finalScore := finalScore + treasureValue;
   end;
+
   if quitFlag = 1 then playerScore := playerScore - 4;
+
   if playerScore < 0 then playerScore := 0;
+
   finalScore := finalScore + playerScore;
 
   Writeln('YOUR SCORE IS ', finalScore, ' OUT OF A POSSIBLE ', maxScore);
+
   if finalScore - playerScore = 300 then goto EndScore;
+
   Exit;
 EndScore:
   Writeln('You scored ', finalScore, ' points.');
   Writeln('There were ', maxScore, ' points possible.');
+
   if finalScore < 1 then
   begin
     Writeln('You must have nothing but space between youre ears!');
     Halt;
   end;
+
   if finalScore < 51 then
   begin
     Writeln('You are obviously a rank amateur.');
     Halt;
   end;
+
   if finalScore < 75 then
   begin
     Writeln('You''re score qualifies you as a novice  class adventurer.');
     Halt;
   end;
+
   if finalScore < 125 then
   begin
     Writeln('You''ve achieved the rating: Experienced Adventurer');
     Halt;
   end;
+
   if finalScore < 175 then
   begin
     Writeln('You have reached the ''junior master''    status.');
     Halt;
   end;
+
   if finalScore < 225 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -D-');
     Halt;
   end;
+
   if finalScore < 295 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -C-');
     Halt;
   end;
+
   if finalScore < 345 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -B-');
     Halt;
   end;
+
   if finalScore < 350 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -A-');
     Halt;
   end;
+
   if finalScore = maxScore then
   begin
     Writeln('All of adventuredom gives tribute');
@@ -962,6 +1008,7 @@ begin
     Writeln('No saved game found.');
     Exit;
   end;
+
   Assign(f, 'advent.sav');
   Reset(f);
   ReadLn(f, currentRoom);
@@ -972,11 +1019,13 @@ begin
   ReadLn(f, ghostCount);
   ReadLn(f, ghostActive);
   ReadLn(f, ghostFlag);
+
   for i := 1 to MaxObjects do
   begin
     ReadLn(f, tempValue);
     objectLocation[i] := tempValue;
   end;
+
   Close(f);
   Writeln('Game loaded.');
 end;
@@ -1115,6 +1164,7 @@ begin
       commandIndex := commandIndex + 1;
       Continue;
     end;
+
     if ExtractNumber(commandTable[commandIndex], 3, 2) <> 0 then
       if ExtractNumber(commandTable[commandIndex], 3, 2) <> nounIndex then
       begin
@@ -1129,14 +1179,19 @@ begin
     begin
       condType := ExtractNumber(commandTable[commandIndex], conditionPos, 2);
       condValue := ExtractNumber(commandTable[commandIndex], conditionPos + 2, 2);
+
       if condType = 1 then
         if objectLocation[condValue] <> -1 then conditionOk := False;
+
       if condType = 2 then
         if currentRoom <> condValue then conditionOk := False;
+
       if condType = 3 then
         if objectLocation[condValue] <> 0 then conditionOk := False;
+
       if condType = 5 then
         if objectLocation[condValue] <> currentRoom then conditionOk := False;
+
       conditionPos := conditionPos + 4;
     end;
 
@@ -1153,15 +1208,18 @@ begin
     Writeln('I CAN''T DO THAT NOW.')
   else
     Writeln('I DON''T UNDERSTAND?');
+
   Exit;
 
 ExecuteIt:
   ExecuteCommandActions(matchedCommand);
+
   if deathHappened = 1 then
   begin
     Writeln;
     Exit;
   end;
+
   if roomChanged = 1 then
   begin
     Exit;
@@ -1179,6 +1237,7 @@ begin
       LocateObjectByKeyword := i;
       Exit;
     end;
+
   LocateObjectByKeyword := 0;
 end;
 
@@ -1192,25 +1251,32 @@ begin
     word1 := word2;
     word2 := '';
   end;
+
   if word1 = 'SAY' then
   begin
     word1 := word2;
     word2 := '';
   end;
+
   verbPrefix := Copy(word1, 1, 3);
   nounPrefix := Copy(word2, 1, 3);
   verbIndex := 0;
   nounIndex := 0;
+
   if (verbPrefix = 'FEE') and (nounPrefix = 'OYS') then nounPrefix := 'DOO';
+
   for synonymLoop := 1 to synonymCount do
     if verbPrefix = UpperCase(synonymShort[synonymLoop]) then verbPrefix := UpperCase(synonymLong[synonymLoop]);
+
   if (nounPrefix = 'HOU') or (nounPrefix = 'TRA') then nounPrefix := 'DOO';
+
   for verbLoop := 1 to MaxVerbs do
     if verbPrefix = UpperCase(verbTable[verbLoop]) then
     begin
       verbIndex := verbLoop;
       Break;
     end;
+
   if word2 <> '' then
   begin
     for nounLoop := 1 to MaxNouns do
@@ -1220,21 +1286,25 @@ begin
         Break;
       end;
   end;
+
   if verbIndex = 0 then
   begin
     Writeln('YOU USE WORD(S) I DON''T KNOW');
     Exit;
   end;
+
   if verbIndex < 7 then
   begin
     AttemptMove(verbIndex - 1);
     Exit;
   end;
+
   if verbIndex = 7 then
   begin
     TakeObject(LocateObjectByKeyword(nounPrefix));
     Exit;
   end;
+
   FindCommand;
 end;
 
@@ -1246,16 +1316,23 @@ var
 {Print room name, visible items, and obvious exits.  Handle darkness.}
 begin
   darkFlag := 0;
+
   if (currentRoom > deathRoom) and (objectLocation[lightObject] <> -1) and (objectLocation[lightObject] <> currentRoom) then darkFlag := 1;
+
   if (currentRoom = limboRoom) or (currentRoom = deathRoom) then darkFlag := 0;
+
   if darkFlag = 0 then goto ShowDescription;
+
   Writeln('I CAN''T SEE IN THE DARK!');
   Writeln;
   Exit;
+
 ShowDescription:
   if Copy(roomName[currentRoom], 1, 1) = '*' then
     roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
+
   Writeln('You''re in ', roomName[currentRoom], '.');
+
   if currentRoom = deathRoom then
   begin
     Writeln;
@@ -1263,9 +1340,11 @@ ShowDescription:
     quitFlag := 1;
     Exit;
   end;
+
   printHeader := 1;
   itemsFound := 0;
   Writeln;
+
   for itemIndex := 1 to MaxObjects do
   begin
     if (objectLocation[itemIndex] = currentRoom) and (printHeader = 1) then
@@ -1274,12 +1353,17 @@ ShowDescription:
       printHeader := 0;
       itemsFound := 1;
     end;
+
     if objectLocation[itemIndex] <> currentRoom then Continue;
+
     Writeln(objectName[itemIndex], '.  ');
   end;
+
   if itemsFound <> 0 then Writeln;
+
   printHeader := 1;
   Writeln;
+
   for exitIndex := 0 to 5 do
   begin
     if (roomExit[currentRoom, exitIndex] <> 0) and (printHeader = 1) then
@@ -1287,12 +1371,16 @@ ShowDescription:
       Writeln('OBVIOUS EXITS:');
       printHeader := 0;
     end;
+
     if roomExit[currentRoom, exitIndex] <> 0 then Write(verbTable[exitIndex + 1], ' ');
   end;
+
   Writeln;
+
   // Horizontal underscore line matching console width
   for lineIndex := 1 to ConsoleWidth do
     Write('_');
+
   Writeln;
   Writeln;
 end;
@@ -1304,25 +1392,35 @@ var
 {One turn: decrement light, random events, read input, parse, execute.}
 begin
   if objectLocation[lightObject] = -1 then lightUnits := lightUnits - 1;
+
   turnCount := turnCount + 1;
+
   CheckLight;
   ProcessRandomEvents;
   DescribeRoomEvents;
+
   if gameKilled = 1 then
   begin
     gameKilled := 0;
     playerScore := playerScore - 5;
     Exit;
   end;
+
   Writeln;
   Write('WHAT NEXT   ');
   ReadLn(userInput);
+
   rawInput := userInput;
+
   if rawInput = '' then Exit;
+
   Writeln;
+
   word1 := '';
   word2 := '';
+
   spacePos := Pos(' ', rawInput);
+
   if spacePos > 0 then
   begin
     word1 := Copy(rawInput, 1, spacePos - 1);
@@ -1330,8 +1428,10 @@ begin
   end
   else
     word1 := rawInput;
+
   word1 := UpperCase(word1);
   word2 := UpperCase(word2);
+
   ProcessInput;
 end;
 
@@ -1346,37 +1446,48 @@ begin
   Writeln('I will be your eyes and hands as you');
   Writeln('search for lost treasure.');
   Writeln;
+
   Writeln('The object is to recover ', treasureCount, ' treasures');
   Writeln('and return them to the proper place.');
   Writeln('Treasures have a ''*'' in their name');
   Writeln;
+
   Writeln('Use two word commands consisting of');
   Writeln('a verb and a noun, example:');
   Writeln;
+
   Writeln('go west, take gold, enter hole, shoot');
   Writeln;
+
   Writeln('inventory, save game, drop treasure');
   Writeln('hit any key to continue');
+
   ReadKey;
+
   Writeln('       Words to Know                 ');
   Writeln('READ - if you have something that can be       read you will read it.');
   Writeln('ENTER - will take you into a hole,              passage, building, etc..');
   Writeln('INVENTORY - gives you list of what you              are carrying.');
   Writeln('LOOK - describes the room you are in.');
   Writeln;
+
   Writeln('Use TAKE and DROP in most cases to      manipulate objects.');
   Writeln;
+
   Writeln('There are many more words that will be  discovered as you explore some may');
   Writeln('even be magic, usually when you tell me things you should use two words.');
   Writeln;
+
   Writeln('If you find one word doesn''t work just  try another.');
   Writeln;
+
   Writeln('Please wait while I load my data...');
 end;
 
 procedure ShowTitleScreen;
 begin
   ClrScr;
+
   Writeln('                adventure  ');
   Writeln('      N  N        M        -by-     ');
   Writeln('     N  N      M     john o''hare ');
@@ -1400,7 +1511,9 @@ begin
   Writeln('                   M M');
   Writeln('  ');
   Writeln;
+
   Writeln('    hit any key to begin adventure');
+
   ReadKey;
 end;
 
@@ -1408,25 +1521,37 @@ procedure SetupGame;
 {Initialize all game variables to starting values.}
 begin
   Randomize;
+
   lightObject := 15;
   treasureValue := 15;
   treasureCount := 20;
   maxScore := treasureValue * treasureCount + 50;
+
   objectLimit := 10;
+
   treasureRoom := 7;
   limboRoom := 57;
   deathRoom := 58;
+
   adventureNumber := 3;
+
   lightUnits := 150;
   lightFlag := 2;
+
   ghostCount := 4;
+
   playerScore := 50;
+
   turnCount := 0;
+
   hubieActive := 0;
+
   ghostFlag := 0;
   ghostActive := 0;
+
   currentRoom := 1;
   darkFlag := 0;
+
   quitFlag := 0;
   gameKilled := 0;
 end;
@@ -1436,8 +1561,10 @@ var
   answer: String;
 begin
   Writeln;
+
   Write('use saved game   n ');
   ReadLn(answer);
+
   if answer <> 'n' then
   begin
     LoadGame;
@@ -1459,24 +1586,32 @@ begin
   InitEvents;
 
   ShowTitleScreen;
+
   ClrScr;                       // clear after title screen
+
   ShowInstructions;
+
   WaitForKey;
+
   ClrScr;                       // clear after instructions
 
   SetupGame;
+
   PromptLoadGame;
 
   Writeln('What time is it (HHMM)');
   ReadLn(timeString);
+
   if Length(timeString) <> 4 then
   begin
     Writeln('illegal time');
     timeString := '1200';
   end;
+
   ClrScr;                       // clear after entering time
 
   displayRoom := True;
+
   while True do
   begin
     if currentRoom = deathRoom then
@@ -1500,7 +1635,9 @@ begin
     end;
 
     if quitFlag = 1 then Break;
+
     GameTurn;
+
     if deathHappened = 1 then
     begin
       deathHappened := 0;
@@ -1509,6 +1646,7 @@ begin
       gameKilled := 1;
       Continue;
     end;
+
     if roomChanged = 1 then
     begin
       roomChanged := 0;
