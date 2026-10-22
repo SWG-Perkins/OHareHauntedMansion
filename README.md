@@ -5,7 +5,7 @@ A Free Pascal console conversion of John O'Hare's **Adventure 1.5** (1980), orig
 ## Intent
 
 This port was created to keep the **spirit and function of the original game** intact.  
-The room layout, object table, command parser, scoring, random encounters, and system messages have been faithfully translated from `OHARES3.BAS` into modern Free Pascal. It plays like the 1980 original: a text-driven exploration of a haunted mansion, with treasures to recover, monsters to avoid, and a flashlight whose batteries run down over time.
+The room layout, object table, command parser, scoring, random encounters, and system messages have been faithfully translated from `OHARES3.BAS` into Free Pascal. It plays like the 1980 original: a text-driven exploration of a haunted mansion, with treasures to recover, monsters to avoid, and a flashlight whose batteries run down over time.
 
 ## History
 
@@ -21,12 +21,12 @@ I made heavy use of the **nvidia/nemotron-3.5-super-v1** local LLM in this conve
 ## Features
 
 * Classic two-word parser (verb + noun)
-* 58 rooms to explore, including the haunted forest, manor house, caverns, and the infamous torture chamber
+* 58 rooms to explore, including the haunted forest, manor house, and caverns
 * 78 objects with keywords, weights, and carry limits
-* Random ghost, goblin, troll, and vampire encounters
+* Random ghost, goblin, and troll encounters
 * Score-based ranking system (from "rank amateur" to "Adventurer Grand Master")
 * Save and load game support
-* Original system messages and flavor text preserved
+* Original system messages and text flavor preserved
 
 ## Requirements
 
