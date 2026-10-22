@@ -1,4 +1,4 @@
-program HauntedMansion;
+program OHARES3;
 
 {$mode objfpc}{$H+}
 
@@ -6,56 +6,63 @@ uses
   SysUtils, StrUtils, Crt;
 
 const
-  MaxN = 36;
-  MaxV = 32;
-  MaxR = 58;
-  MaxO = 78;
-  MaxM = 59;
-  MaxC = 91;
+  MaxNouns = 36;
+  MaxVerbs = 32;
+  MaxRooms = 58;
+  MaxObjects = 78;
+  MaxMessages = 59;
+  MaxCommands = 91;
 
 var
-  lu, lf, lt, tv, t7, mxv, ol, tr, lb, dt, ad, r, df, so, gn, ga, gf, ht, ha: Integer;
-  obLoc : array[0..MaxO] of Integer;
-  obSize: array[0..MaxO] of Integer;
-  obName: array[0..MaxO] of String;
-  obKey : array[0..MaxO] of String;
-  rmName: array[0..MaxR] of String;
-  rmExit: array[0..MaxR, 0..5] of Integer;
-  noun  : array[0..MaxN] of String;
-  verb  : array[0..MaxV] of String;
-  msg   : array[0..MaxM] of String;
-  cmd   : array[1..MaxC] of String;
-  w1    : array[1..20] of String;
-  w2    : array[1..20] of String;
-  w0    : Integer;
-  e4    : String;
-  eMsg  : array[1..7] of String;
-  hsMsg : array[1..3] of String;
-  e5    : String;
+  lightUnits, lightFlag, lightObject, treasureValue, treasureCount, maxScore,
+  objectLimit, treasureRoom, currentRoom, limboRoom, deathRoom, adventureNumber,
+  darkFlag, playerScore, ghostCount, ghostActive, ghostFlag, turnCount,
+  hubieActive, commandStart, commandEnd, verbIndex, nounIndex, matchFound,
+  conditionCount, matchedCommand, printHeader, itemsFound, exitIndex,
+  itemActionFlag, deathHappened, roomFlag, roomChanged, readObject, eatObject,
+  quitFlag, finalScore, spacePosition, gameKilled: Integer;
 
-  jp, c7, i1, i2, mf, k, an, x, uf, oe, af, dh, rf, rc, h, e, qf, sc, sb, gk: Integer;
-  ip, i1s, i2s, v1s, n1s, tm: String;
-  vi, pq, os, td, w3, vl, nl, y, z, g, ob: Integer;
-  c1, c2, a1, a2, a3: Integer;
+  objectLocation : array[0..MaxObjects] of Integer;
+  objectSize: array[0..MaxObjects] of Integer;
+  objectName: array[0..MaxObjects] of String;
+  objectKeyword : array[0..MaxObjects] of String;
+  roomName: array[0..MaxRooms] of String;
+  roomExit: array[0..MaxRooms, 0..5] of Integer;
+  nounTable  : array[0..MaxNouns] of String;
+  verbTable  : array[0..MaxVerbs] of String;
+  messageTable   : array[0..MaxMessages] of String;
+  commandTable   : array[1..MaxCommands] of String;
+  synonymShort   : array[1..20] of String;
+  synonymLong    : array[1..20] of String;
+  synonymCount   : Integer;
+  endCommand     : String;
+  eventMessage   : array[1..7] of String;
+  hubieMessage   : array[1..3] of String;
+  endString      : String;
 
-function GetNum(const s: String; start, len: Integer): Integer;
+  rawInput, word1, word2, verbPrefix, nounPrefix, timeString: String;
+  itemIndex, carryIndex, carriedCount, treasureIndex, synonymLoop,
+  verbLoop, nounLoop, commandIndex, conditionPos, actionPos, tempObjectLoc,
+  condType, condValue, actionType, actionVal1, actionVal2: Integer;
+
+function ExtractNumber(const s: String; start, len: Integer): Integer;
 var
-  code, v: Integer;
-  st: String;
+  code, value: Integer;
+  sub: String;
 begin
-  st := Copy(s, start, len);
-  Val(st, v, code);
-  if code <> 0 then v := 0;
-  GetNum := v;
+  sub := Copy(s, start, len);
+  Val(sub, value, code);
+  if code <> 0 then value := 0;
+  ExtractNumber := value;
 end;
 
-function RndRange(x: Integer): Integer;
+function RandomRange(x: Integer): Integer;
 begin
   if x <= 0 then Exit(0);
   Result := Random(x) + 1;
 end;
 
-procedure PauseAnyKey;
+procedure WaitForKey;
 var
   ch: Char;
 begin
@@ -66,706 +73,703 @@ end;
 
 procedure InitNouns;
 begin
-  noun[0] := 'nnn'; noun[1] := 'mai'; noun[2] := 'big'; noun[3] := 'spi'; noun[4] := 'let';
-  noun[5] := 'doo'; noun[6] := 'mat'; noun[7] := 'but'; noun[8] := 'kni'; noun[9] := 'bot';
-  noun[10] := 'liq'; noun[11] := 'des'; noun[12] := 'oys'; noun[13] := 'pap'; noun[14] := 'red';
-  noun[15] := 'blu'; noun[16] := 'gre'; noun[17] := 'boo'; noun[18] := 'gol'; noun[19] := 'clo';
-  noun[20] := 'cof'; noun[21] := 'pot'; noun[22] := 'sta'; noun[23] := 'lad'; noun[24] := 'gun';
-  noun[25] := 'cro'; noun[26] := 'tru'; noun[27] := 'rug'; noun[28] := 'gob'; noun[29] := 'gho';
-  noun[30] := 'tro'; noun[31] := 'sig'; noun[32] := 'fla'; noun[33] := 'win'; noun[34] := 'gam';
-  noun[35] := 'pas';
+  nounTable[0] := 'nnn'; nounTable[1] := 'mai'; nounTable[2] := 'big'; nounTable[3] := 'spi'; nounTable[4] := 'let';
+  nounTable[5] := 'doo'; nounTable[6] := 'mat'; nounTable[7] := 'but'; nounTable[8] := 'kni'; nounTable[9] := 'bot';
+  nounTable[10] := 'liq'; nounTable[11] := 'des'; nounTable[12] := 'oys'; nounTable[13] := 'pap'; nounTable[14] := 'red';
+  nounTable[15] := 'blu'; nounTable[16] := 'gre'; nounTable[17] := 'boo'; nounTable[18] := 'gol'; nounTable[19] := 'clo';
+  nounTable[20] := 'cof'; nounTable[21] := 'pot'; nounTable[22] := 'sta'; nounTable[23] := 'lad'; nounTable[24] := 'gun';
+  nounTable[25] := 'cro'; nounTable[26] := 'tru'; nounTable[27] := 'rug'; nounTable[28] := 'gob'; nounTable[29] := 'gho';
+  nounTable[30] := 'tro'; nounTable[31] := 'sig'; nounTable[32] := 'fla'; nounTable[33] := 'win'; nounTable[34] := 'gam';
+  nounTable[35] := 'pas';
 end;
 
 procedure InitVerbs;
 begin
-  verb[0] := 'vvv'; verb[1] := 'nor'; verb[2] := 'sou'; verb[3] := 'eas'; verb[4] := 'wes';
-  verb[5] := 'up'; verb[6] := 'dow'; verb[7] := 'tak'; verb[8] := 'dro'; verb[9] := 'ent';
-  verb[10] := 'inv'; verb[11] := 'loo'; verb[12] := 'sco'; verb[13] := 'qui'; verb[14] := 'hel';
-  verb[15] := 'pus'; verb[16] := 'rea'; verb[17] := 'ope'; verb[18] := 'mov'; verb[19] := 'sho';
-  verb[20] := 'run'; verb[21] := 'kil'; verb[22] := 'eat'; verb[23] := 'cli'; verb[24] := 'tur';
-  verb[25] := 'on'; verb[26] := 'off'; verb[27] := 'dri'; verb[28] := 'cbm'; verb[29] := 'sav';
-  verb[30] := 'thr'; verb[31] := 'sta';
+  verbTable[0] := 'vvv'; verbTable[1] := 'nor'; verbTable[2] := 'sou'; verbTable[3] := 'eas'; verbTable[4] := 'wes';
+  verbTable[5] := 'up'; verbTable[6] := 'dow'; verbTable[7] := 'tak'; verbTable[8] := 'dro'; verbTable[9] := 'ent';
+  verbTable[10] := 'inv'; verbTable[11] := 'loo'; verbTable[12] := 'sco'; verbTable[13] := 'qui'; verbTable[14] := 'hel';
+  verbTable[15] := 'pus'; verbTable[16] := 'rea'; verbTable[17] := 'ope'; verbTable[18] := 'mov'; verbTable[19] := 'sho';
+  verbTable[20] := 'run'; verbTable[21] := 'kil'; verbTable[22] := 'eat'; verbTable[23] := 'cli'; verbTable[24] := 'tur';
+  verbTable[25] := 'on'; verbTable[26] := 'off'; verbTable[27] := 'dri'; verbTable[28] := 'cbm'; verbTable[29] := 'sav';
+  verbTable[30] := 'thr'; verbTable[31] := 'sta';
 end;
 
 procedure InitRooms;
 begin
-  rmName[0] := '';
-  rmExit[0,0] := 0; rmExit[0,1] := 0; rmExit[0,2] := 0; rmExit[0,3] := 0; rmExit[0,4] := 0; rmExit[0,5] := 0;
+  roomName[0] := '';
+  roomExit[0,0] := 0; roomExit[0,1] := 0; roomExit[0,2] := 0; roomExit[0,3] := 0; roomExit[0,4] := 0; roomExit[0,5] := 0;
 
-  rmName[1] := '*You''re on an old worn path';
-  rmExit[1,0] := 6; rmExit[1,1] := 0; rmExit[1,2] := 1; rmExit[1,3] := 2; rmExit[1,4] := 0; rmExit[1,5] := 0;
+  roomName[1] := '*You''re on an old worn path';
+  roomExit[1,0] := 6; roomExit[1,1] := 0; roomExit[1,2] := 1; roomExit[1,3] := 2; roomExit[1,4] := 0; roomExit[1,5] := 0;
 
-  rmName[2] := '*You''re walking along an old path';
-  rmExit[2,0] := 5; rmExit[2,1] := 0; rmExit[2,2] := 1; rmExit[2,3] := 3; rmExit[2,4] := 0; rmExit[2,5] := 0;
+  roomName[2] := '*You''re walking along an old path';
+  roomExit[2,0] := 5; roomExit[2,1] := 0; roomExit[2,2] := 1; roomExit[2,3] := 3; roomExit[2,4] := 0; roomExit[2,5] := 0;
 
-  rmName[3] := 'front of a big spooky house';
-  rmExit[3,0] := 0; rmExit[3,1] := 7; rmExit[3,2] := 2; rmExit[3,3] := 4; rmExit[3,4] := 0; rmExit[3,5] := 0;
+  roomName[3] := 'front of a big spooky house';
+  roomExit[3,0] := 0; roomExit[3,1] := 7; roomExit[3,2] := 2; roomExit[3,3] := 4; roomExit[3,4] := 0; roomExit[3,5] := 0;
 
-  rmName[4] := 'the haunted forest';
-  rmExit[4,0] := 5; rmExit[4,1] := 4; rmExit[4,2] := 4; rmExit[4,3] := 5; rmExit[4,4] := 0; rmExit[4,5] := 0;
+  roomName[4] := 'the haunted forest';
+  roomExit[4,0] := 5; roomExit[4,1] := 4; roomExit[4,2] := 4; roomExit[4,3] := 5; roomExit[4,4] := 0; roomExit[4,5] := 0;
 
-  rmName[5] := 'the haunted forest';
-  rmExit[5,0] := 4; rmExit[5,1] := 4; rmExit[5,2] := 6; rmExit[5,3] := 4; rmExit[5,4] := 0; rmExit[5,5] := 0;
+  roomName[5] := 'the haunted forest';
+  roomExit[5,0] := 4; roomExit[5,1] := 4; roomExit[5,2] := 6; roomExit[5,3] := 4; roomExit[5,4] := 0; roomExit[5,5] := 0;
 
-  rmName[6] := 'the haunted forest';
-  rmExit[6,0] := 5; rmExit[6,1] := 4; rmExit[6,2] := 1; rmExit[6,3] := 5; rmExit[6,4] := 0; rmExit[6,5] := 0;
+  roomName[6] := 'the haunted forest';
+  roomExit[6,0] := 5; roomExit[6,1] := 4; roomExit[6,2] := 1; roomExit[6,3] := 5; roomExit[6,4] := 0; roomExit[6,5] := 0;
 
-  rmName[7] := '*You''re on the porch of the old house';
-  rmExit[7,0] := 3; rmExit[7,1] := 0; rmExit[7,2] := 0; rmExit[7,3] := 0; rmExit[7,4] := 0; rmExit[7,5] := 0;
+  roomName[7] := '*You''re on the porch of the old house';
+  roomExit[7,0] := 3; roomExit[7,1] := 0; roomExit[7,2] := 0; roomExit[7,3] := 0; roomExit[7,4] := 0; roomExit[7,5] := 0;
 
-  rmName[8] := 'an old dusty living room';
-  rmExit[8,0] := 7; rmExit[8,1] := 12; rmExit[8,2] := 9; rmExit[8,3] := 0; rmExit[8,4] := 0; rmExit[8,5] := 0;
+  roomName[8] := 'an old dusty living room';
+  roomExit[8,0] := 7; roomExit[8,1] := 12; roomExit[8,2] := 9; roomExit[8,3] := 0; roomExit[8,4] := 0; roomExit[8,5] := 0;
 
-  rmName[9] := 'the dining room';
-  rmExit[9,0] := 0; rmExit[9,1] := 13; rmExit[9,2] := 10; rmExit[9,3] := 8; rmExit[9,4] := 0; rmExit[9,5] := 0;
+  roomName[9] := 'the dining room';
+  roomExit[9,0] := 0; roomExit[9,1] := 13; roomExit[9,2] := 10; roomExit[9,3] := 8; roomExit[9,4] := 0; roomExit[9,5] := 0;
 
-  rmName[10] := 'the kitchen';
-  rmExit[10,0] := 0; rmExit[10,1] := 0; rmExit[10,2] := 11; rmExit[10,3] := 9; rmExit[10,4] := 0; rmExit[10,5] := 0;
+  roomName[10] := 'the kitchen';
+  roomExit[10,0] := 0; roomExit[10,1] := 0; roomExit[10,2] := 11; roomExit[10,3] := 9; roomExit[10,4] := 0; roomExit[10,5] := 0;
 
-  rmName[11] := 'a musty old pantry';
-  rmExit[11,0] := 0; rmExit[11,1] := 0; rmExit[11,2] := 0; rmExit[11,3] := 10; rmExit[11,4] := 0; rmExit[11,5] := 0;
+  roomName[11] := 'a musty old pantry';
+  roomExit[11,0] := 0; roomExit[11,1] := 0; roomExit[11,2] := 0; roomExit[11,3] := 10; roomExit[11,4] := 0; roomExit[11,5] := 0;
 
-  rmName[12] := 'the family room';
-  rmExit[12,0] := 8; rmExit[12,1] := 0; rmExit[12,2] := 13; rmExit[12,3] := 0; rmExit[12,4] := 0; rmExit[12,5] := 0;
+  roomName[12] := 'the family room';
+  roomExit[12,0] := 8; roomExit[12,1] := 0; roomExit[12,2] := 13; roomExit[12,3] := 0; roomExit[12,4] := 0; roomExit[12,5] := 0;
 
-  rmName[13] := 'a small alcove';
-  rmExit[13,0] := 9; rmExit[13,1] := 16; rmExit[13,2] := 0; rmExit[13,3] := 12; rmExit[13,4] := 26; rmExit[13,5] := 0;
+  roomName[13] := 'a small alcove';
+  roomExit[13,0] := 9; roomExit[13,1] := 16; roomExit[13,2] := 0; roomExit[13,3] := 12; roomExit[13,4] := 26; roomExit[13,5] := 0;
 
-  rmName[14] := 'the study';
-  rmExit[14,0] := 0; rmExit[14,1] := 17; rmExit[14,2] := 0; rmExit[14,3] := 0; rmExit[14,4] := 0; rmExit[14,5] := 0;
+  roomName[14] := 'the study';
+  roomExit[14,0] := 0; roomExit[14,1] := 17; roomExit[14,2] := 0; roomExit[14,3] := 0; roomExit[14,4] := 0; roomExit[14,5] := 0;
 
-  rmName[15] := '*You''re at the west end of a corridor';
-  rmExit[15,0] := 0; rmExit[15,1] := 18; rmExit[15,2] := 16; rmExit[15,3] := 0; rmExit[15,4] := 0; rmExit[15,5] := 0;
+  roomName[15] := '*You''re at the west end of a corridor';
+  roomExit[15,0] := 0; roomExit[15,1] := 18; roomExit[15,2] := 16; roomExit[15,3] := 0; roomExit[15,4] := 0; roomExit[15,5] := 0;
 
-  rmName[16] := 'the middle of a corridor';
-  rmExit[16,0] := 13; rmExit[16,1] := 19; rmExit[16,2] := 17; rmExit[16,3] := 15; rmExit[16,4] := 0; rmExit[16,5] := 0;
+  roomName[16] := 'the middle of a corridor';
+  roomExit[16,0] := 13; roomExit[16,1] := 19; roomExit[16,2] := 17; roomExit[16,3] := 15; roomExit[16,4] := 0; roomExit[16,5] := 0;
 
-  rmName[17] := '*You''re at the east end of a corridor';
-  rmExit[17,0] := 14; rmExit[17,1] := 20; rmExit[17,2] := 0; rmExit[17,3] := 16; rmExit[17,4] := 0; rmExit[17,5] := 0;
+  roomName[17] := '*You''re at the east end of a corridor';
+  roomExit[17,0] := 14; roomExit[17,1] := 20; roomExit[17,2] := 0; roomExit[17,3] := 16; roomExit[17,4] := 0; roomExit[17,5] := 0;
 
-  rmName[18] := 'the Den';
-  rmExit[18,0] := 15; rmExit[18,1] := 0; rmExit[18,2] := 0; rmExit[18,3] := 0; rmExit[18,4] := 0; rmExit[18,5] := 0;
+  roomName[18] := 'the Den';
+  roomExit[18,0] := 15; roomExit[18,1] := 0; roomExit[18,2] := 0; roomExit[18,3] := 0; roomExit[18,4] := 0; roomExit[18,5] := 0;
 
-  rmName[19] := 'the Library';
-  rmExit[19,0] := 16; rmExit[19,1] := 0; rmExit[19,2] := 0; rmExit[19,3] := 0; rmExit[19,4] := 0; rmExit[19,5] := 0;
+  roomName[19] := 'the Library';
+  roomExit[19,0] := 16; roomExit[19,1] := 0; roomExit[19,2] := 0; roomExit[19,3] := 0; roomExit[19,4] := 0; roomExit[19,5] := 0;
 
-  rmName[20] := 'a Guest Room';
-  rmExit[20,0] := 17; rmExit[20,1] := 0; rmExit[20,2] := 0; rmExit[20,3] := 21; rmExit[20,4] := 0; rmExit[20,5] := 0;
+  roomName[20] := 'a Guest Room';
+  roomExit[20,0] := 17; roomExit[20,1] := 0; roomExit[20,2] := 0; roomExit[20,3] := 21; roomExit[20,4] := 0; roomExit[20,5] := 0;
 
-  rmName[21] := 'a dusty closet';
-  rmExit[21,0] := 0; rmExit[21,1] := 0; rmExit[21,2] := 20; rmExit[21,3] := 0; rmExit[21,4] := 0; rmExit[21,5] := 0;
+  roomName[21] := 'a dusty closet';
+  roomExit[21,0] := 0; roomExit[21,1] := 0; roomExit[21,2] := 20; roomExit[21,3] := 0; roomExit[21,4] := 0; roomExit[21,5] := 0;
 
-  rmName[22] := 'the trophy room';
-  rmExit[22,0] := 0; rmExit[22,1] := 25; rmExit[22,2] := 0; rmExit[22,3] := 0; rmExit[22,4] := 0; rmExit[22,5] := 0;
+  roomName[22] := 'the trophy room';
+  roomExit[22,0] := 0; roomExit[22,1] := 25; roomExit[22,2] := 0; roomExit[22,3] := 0; roomExit[22,4] := 0; roomExit[22,5] := 0;
 
-  rmName[23] := 'an old dusty nursery';
-  rmExit[23,0] := 0; rmExit[23,1] := 26; rmExit[23,2] := 0; rmExit[23,3] := 0; rmExit[23,4] := 0; rmExit[23,5] := 0;
+  roomName[23] := 'an old dusty nursery';
+  roomExit[23,0] := 0; roomExit[23,1] := 26; roomExit[23,2] := 0; roomExit[23,3] := 0; roomExit[23,4] := 0; roomExit[23,5] := 0;
 
-  rmName[24] := 'a large bathroom';
-  rmExit[24,0] := 0; rmExit[24,1] := 27; rmExit[24,2] := 0; rmExit[24,3] := 0; rmExit[24,4] := 0; rmExit[24,5] := 0;
+  roomName[24] := 'a large bathroom';
+  roomExit[24,0] := 0; roomExit[24,1] := 27; roomExit[24,2] := 0; roomExit[24,3] := 0; roomExit[24,4] := 0; roomExit[24,5] := 0;
 
-  rmName[25] := '*You''re at the west end of a hallway';
-  rmExit[25,0] := 22; rmExit[25,1] := 28; rmExit[25,2] := 26; rmExit[25,3] := 0; rmExit[25,4] := 0; rmExit[25,5] := 0;
+  roomName[25] := '*You''re at the west end of a hallway';
+  roomExit[25,0] := 22; roomExit[25,1] := 28; roomExit[25,2] := 26; roomExit[25,3] := 0; roomExit[25,4] := 0; roomExit[25,5] := 0;
 
-  rmName[26] := 'a stairwell';
-  rmExit[26,0] := 23; rmExit[26,1] := 31; rmExit[26,2] := 27; rmExit[26,3] := 25; rmExit[26,4] := 0; rmExit[26,5] := 13;
+  roomName[26] := 'a stairwell';
+  roomExit[26,0] := 23; roomExit[26,1] := 31; roomExit[26,2] := 27; roomExit[26,3] := 25; roomExit[26,4] := 0; roomExit[26,5] := 13;
 
-  rmName[27] := '*You''re at the east end of a hallway';
-  rmExit[27,0] := 24; rmExit[27,1] := 32; rmExit[27,2] := 0; rmExit[27,3] := 26; rmExit[27,4] := 0; rmExit[27,5] := 0;
+  roomName[27] := '*You''re at the east end of a hallway';
+  roomExit[27,0] := 24; roomExit[27,1] := 32; roomExit[27,2] := 0; roomExit[27,3] := 26; roomExit[27,4] := 0; roomExit[27,5] := 0;
 
-  rmName[28] := 'the master bedroom';
-  rmExit[28,0] := 25; rmExit[28,1] := 0; rmExit[28,2] := 0; rmExit[28,3] := 29; rmExit[28,4] := 0; rmExit[28,5] := 0;
+  roomName[28] := 'the master bedroom';
+  roomExit[28,0] := 25; roomExit[28,1] := 0; roomExit[28,2] := 0; roomExit[28,3] := 29; roomExit[28,4] := 0; roomExit[28,5] := 0;
 
-  rmName[29] := 'a dark, dusty closet. A ladder leads up here';
-  rmExit[29,0] := 0; rmExit[29,1] := 0; rmExit[29,2] := 28; rmExit[29,3] := 0; rmExit[29,4] := 30; rmExit[29,5] := 0;
+  roomName[29] := 'a dark, dusty closet. A ladder leads up here';
+  roomExit[29,0] := 0; roomExit[29,1] := 0; roomExit[29,2] := 28; roomExit[29,3] := 0; roomExit[29,4] := 30; roomExit[29,5] := 0;
 
-  rmName[30] := '*You''re on the ladder';
-  rmExit[30,0] := 0; rmExit[30,1] := 0; rmExit[30,2] := 0; rmExit[30,3] := 0; rmExit[30,4] := 0; rmExit[30,5] := 29;
+  roomName[30] := '*You''re on the ladder';
+  roomExit[30,0] := 0; roomExit[30,1] := 0; roomExit[30,2] := 0; roomExit[30,3] := 0; roomExit[30,4] := 0; roomExit[30,5] := 29;
 
-  rmName[31] := 'a yellow bedroom';
-  rmExit[31,0] := 26; rmExit[31,1] := 0; rmExit[31,2] := 0; rmExit[31,3] := 0; rmExit[31,4] := 0; rmExit[31,5] := 0;
+  roomName[31] := 'a yellow bedroom';
+  roomExit[31,0] := 26; roomExit[31,1] := 0; roomExit[31,2] := 0; roomExit[31,3] := 0; roomExit[31,4] := 0; roomExit[31,5] := 0;
 
-  rmName[32] := 'a white bedroom';
-  rmExit[32,0] := 27; rmExit[32,1] := 0; rmExit[32,2] := 0; rmExit[32,3] := 0; rmExit[32,4] := 0; rmExit[32,5] := 0;
+  roomName[32] := 'a white bedroom';
+  roomExit[32,0] := 27; roomExit[32,1] := 0; roomExit[32,2] := 0; roomExit[32,3] := 0; roomExit[32,4] := 0; roomExit[32,5] := 0;
 
-  rmName[33] := 'the west end of the attic';
-  rmExit[33,0] := 0; rmExit[33,1] := 0; rmExit[33,2] := 34; rmExit[33,3] := 0; rmExit[33,4] := 0; rmExit[33,5] := 30;
+  roomName[33] := 'the west end of the attic';
+  roomExit[33,0] := 0; roomExit[33,1] := 0; roomExit[33,2] := 34; roomExit[33,3] := 0; roomExit[33,4] := 0; roomExit[33,5] := 30;
 
-  rmName[34] := 'the east end of the attic';
-  rmExit[34,0] := 0; rmExit[34,1] := 35; rmExit[34,2] := 0; rmExit[34,3] := 33; rmExit[34,4] := 0; rmExit[34,5] := 0;
+  roomName[34] := 'the east end of the attic';
+  roomExit[34,0] := 0; roomExit[34,1] := 35; roomExit[34,2] := 0; roomExit[34,3] := 33; roomExit[34,4] := 0; roomExit[34,5] := 0;
 
-  rmName[35] := 'a dirty old storeroom';
-  rmExit[35,0] := 34; rmExit[35,1] := 0; rmExit[35,2] := 0; rmExit[35,3] := 0; rmExit[35,4] := 0; rmExit[35,5] := 0;
+  roomName[35] := 'a dirty old storeroom';
+  roomExit[35,0] := 34; roomExit[35,1] := 0; roomExit[35,2] := 0; roomExit[35,3] := 0; roomExit[35,4] := 0; roomExit[35,5] := 0;
 
-  rmName[36] := 'the basement, there is a large open door to the south';
-  rmExit[36,0] := 0; rmExit[36,1] := 40; rmExit[36,2] := 0; rmExit[36,3] := 37; rmExit[36,4] := 10; rmExit[36,5] := 0;
+  roomName[36] := 'the basement, there is a large open door to the south';
+  roomExit[36,0] := 0; roomExit[36,1] := 40; roomExit[36,2] := 0; roomExit[36,3] := 37; roomExit[36,4] := 10; roomExit[36,5] := 0;
 
-  rmName[37] := 'a laundry room';
-  rmExit[37,0] := 0; rmExit[37,1] := 0; rmExit[37,2] := 36; rmExit[37,3] := 38; rmExit[37,4] := 0; rmExit[37,5] := 0;
+  roomName[37] := 'a laundry room';
+  roomExit[37,0] := 0; roomExit[37,1] := 0; roomExit[37,2] := 36; roomExit[37,3] := 38; roomExit[37,4] := 0; roomExit[37,5] := 0;
 
-  rmName[38] := 'a musty, old room in the      basement';
-  rmExit[38,0] := 0; rmExit[38,1] := 39; rmExit[38,2] := 37; rmExit[38,3] := 0; rmExit[38,4] := 0; rmExit[38,5] := 0;
+  roomName[38] := 'a musty, old room in the      basement';
+  roomExit[38,0] := 0; roomExit[38,1] := 39; roomExit[38,2] := 37; roomExit[38,3] := 0; roomExit[38,4] := 0; roomExit[38,5] := 0;
 
-  rmName[39] := 'an old wine cellar';
-  rmExit[39,0] := 38; rmExit[39,1] := 0; rmExit[39,2] := 0; rmExit[39,3] := 0; rmExit[39,4] := 0; rmExit[39,5] := 0;
+  roomName[39] := 'an old wine cellar';
+  roomExit[39,0] := 38; roomExit[39,1] := 0; roomExit[39,2] := 0; roomExit[39,3] := 0; roomExit[39,4] := 0; roomExit[39,5] := 0;
 
-  rmName[40] := 'a chilly, damp room';
-  rmExit[40,0] := 36; rmExit[40,1] := 0; rmExit[40,2] := 0; rmExit[40,3] := 0; rmExit[40,4] := 0; rmExit[40,5] := 0;
+  roomName[40] := 'a chilly, damp room';
+  roomExit[40,0] := 36; roomExit[40,1] := 0; roomExit[40,2] := 0; roomExit[40,3] := 0; roomExit[40,4] := 0; roomExit[40,5] := 0;
 
-  rmName[41] := 'a secret underground cavern';
-  rmExit[41,0] := 0; rmExit[41,1] := 42; rmExit[41,2] := 0; rmExit[41,3] := 0; rmExit[41,4] := 40; rmExit[41,5] := 0;
+  roomName[41] := 'a secret underground cavern';
+  roomExit[41,0] := 0; roomExit[41,1] := 42; roomExit[41,2] := 0; roomExit[41,3] := 0; roomExit[41,4] := 40; roomExit[41,5] := 0;
 
-  rmName[42] := 'a narrow passage';
-  rmExit[42,0] := 41; rmExit[42,1] := 0; rmExit[42,2] := 43; rmExit[42,3] := 0; rmExit[42,4] := 0; rmExit[42,5] := 0;
+  roomName[42] := 'a narrow passage';
+  roomExit[42,0] := 41; roomExit[42,1] := 0; roomExit[42,2] := 43; roomExit[42,3] := 0; roomExit[42,4] := 0; roomExit[42,5] := 0;
 
-  rmName[43] := 'a drafty chamber';
-  rmExit[43,0] := 0; rmExit[43,1] := 0; rmExit[43,2] := 44; rmExit[43,3] := 42; rmExit[43,4] := 0; rmExit[43,5] := 0;
+  roomName[43] := 'a drafty chamber';
+  roomExit[43,0] := 0; roomExit[43,1] := 0; roomExit[43,2] := 44; roomExit[43,3] := 42; roomExit[43,4] := 0; roomExit[43,5] := 0;
 
-  rmName[44] := 'a large circular chamber';
-  rmExit[44,0] := 45; rmExit[44,1] := 0; rmExit[44,2] := 46; rmExit[44,3] := 43; rmExit[44,4] := 0; rmExit[44,5] := 0;
+  roomName[44] := 'a large circular chamber';
+  roomExit[44,0] := 45; roomExit[44,1] := 0; roomExit[44,2] := 46; roomExit[44,3] := 43; roomExit[44,4] := 0; roomExit[44,5] := 0;
 
-  rmName[45] := 'a splendid chamber 30 feet    high';
-  rmExit[45,0] := 47; rmExit[45,1] := 44; rmExit[45,2] := 0; rmExit[45,3] := 0; rmExit[45,4] := 0; rmExit[45,5] := 0;
+  roomName[45] := 'a splendid chamber 30 feet    high';
+  roomExit[45,0] := 47; roomExit[45,1] := 44; roomExit[45,2] := 0; roomExit[45,3] := 0; roomExit[45,4] := 0; roomExit[45,5] := 0;
 
-  rmName[46] := 'a roughly carved room, a pit  leads down';
-  rmExit[46,0] := 0; rmExit[46,1] := 52; rmExit[46,2] := 0; rmExit[46,3] := 44; rmExit[46,4] := 0; rmExit[46,5] := 53;
+  roomName[46] := 'a roughly carved room, a pit  leads down';
+  roomExit[46,0] := 0; roomExit[46,1] := 52; roomExit[46,2] := 0; roomExit[46,3] := 44; roomExit[46,4] := 0; roomExit[46,5] := 53;
 
-  rmName[47] := '*You''re at a junction of three passages';
-  rmExit[47,0] := 0; rmExit[47,1] := 45; rmExit[47,2] := 48; rmExit[47,3] := 56; rmExit[47,4] := 0; rmExit[47,5] := 0;
+  roomName[47] := '*You''re at a junction of three passages';
+  roomExit[47,0] := 0; roomExit[47,1] := 45; roomExit[47,2] := 48; roomExit[47,3] := 56; roomExit[47,4] := 0; roomExit[47,5] := 0;
 
-  rmName[48] := 'a dusty passage';
-  rmExit[48,0] := 0; rmExit[48,1] := 0; rmExit[48,2] := 49; rmExit[48,3] := 47; rmExit[48,4] := 0; rmExit[48,5] := 0;
+  roomName[48] := 'a dusty passage';
+  roomExit[48,0] := 0; roomExit[48,1] := 0; roomExit[48,2] := 49; roomExit[48,3] := 47; roomExit[48,4] := 0; roomExit[48,5] := 0;
 
-  rmName[49] := 'an old broken passage';
-  rmExit[49,0] := 0; rmExit[49,1] := 0; rmExit[49,2] := 50; rmExit[49,3] := 48; rmExit[49,4] := 0; rmExit[49,5] := 0;
+  roomName[49] := 'an old broken passage';
+  roomExit[49,0] := 0; roomExit[49,1] := 0; roomExit[49,2] := 50; roomExit[49,3] := 48; roomExit[49,4] := 0; roomExit[49,5] := 0;
 
-  rmName[50] := '*You''re at a turn in the passage';
-  rmExit[50,0] := 0; rmExit[50,1] := 51; rmExit[50,2] := 0; rmExit[50,3] := 49; rmExit[50,4] := 0; rmExit[50,5] := 0;
+  roomName[50] := '*You''re at a turn in the passage';
+  roomExit[50,0] := 0; roomExit[50,1] := 51; roomExit[50,2] := 0; roomExit[50,3] := 49; roomExit[50,4] := 0; roomExit[50,5] := 0;
 
-  rmName[51] := 'a TORTURE CHAMBER';
-  rmExit[51,0] := 50; rmExit[51,1] := 0; rmExit[51,2] := 0; rmExit[51,3] := 0; rmExit[51,4] := 0; rmExit[51,5] := 0;
+  roomName[51] := 'a TORTURE CHAMBER';
+  roomExit[51,0] := 50; roomExit[51,1] := 0; roomExit[51,2] := 0; roomExit[51,3] := 0; roomExit[51,4] := 0; roomExit[51,5] := 0;
 
-  rmName[52] := 'a cold damp room';
-  rmExit[52,0] := 46; rmExit[52,1] := 0; rmExit[52,2] := 0; rmExit[52,3] := 0; rmExit[52,4] := 0; rmExit[52,5] := 0;
+  roomName[52] := 'a cold damp room';
+  roomExit[52,0] := 46; roomExit[52,1] := 0; roomExit[52,2] := 0; roomExit[52,3] := 0; roomExit[52,4] := 0; roomExit[52,5] := 0;
 
-  rmName[53] := 'a pit';
-  rmExit[53,0] := 0; rmExit[53,1] := 0; rmExit[53,2] := 0; rmExit[53,3] := 0; rmExit[53,4] := 0; rmExit[53,5] := 54;
+  roomName[53] := 'a pit';
+  roomExit[53,0] := 0; roomExit[53,1] := 0; roomExit[53,2] := 0; roomExit[53,3] := 0; roomExit[53,4] := 0; roomExit[53,5] := 54;
 
-  rmName[54] := 'a pit';
-  rmExit[54,0] := 0; rmExit[54,1] := 0; rmExit[54,2] := 0; rmExit[54,3] := 0; rmExit[54,4] := 0; rmExit[54,5] := 55;
+  roomName[54] := 'a pit';
+  roomExit[54,0] := 0; roomExit[54,1] := 0; roomExit[54,2] := 0; roomExit[54,3] := 0; roomExit[54,4] := 0; roomExit[54,5] := 55;
 
-  rmName[55] := 'a pit.  There are no exits';
-  rmExit[55,0] := 0; rmExit[55,1] := 0; rmExit[55,2] := 0; rmExit[55,3] := 0; rmExit[55,4] := 0; rmExit[55,5] := 0;
+  roomName[55] := 'a pit.  There are no exits';
+  roomExit[55,0] := 0; roomExit[55,1] := 0; roomExit[55,2] := 0; roomExit[55,3] := 0; roomExit[55,4] := 0; roomExit[55,5] := 0;
 
-  rmName[56] := 'a dead end passage';
-  rmExit[56,0] := 0; rmExit[56,1] := 0; rmExit[56,2] := 47; rmExit[56,3] := 0; rmExit[56,4] := 0; rmExit[56,5] := 0;
+  roomName[56] := 'a dead end passage';
+  roomExit[56,0] := 0; roomExit[56,1] := 0; roomExit[56,2] := 47; roomExit[56,3] := 0; roomExit[56,4] := 0; roomExit[56,5] := 0;
 
-  rmName[57] := ' a misty room with strange    looking exits';
-  rmExit[57,0] := 1; rmExit[57,1] := 58; rmExit[57,2] := 58; rmExit[57,3] := 58; rmExit[57,4] := 5; rmExit[57,5] := 58;
+  roomName[57] := ' a misty room with strange    looking exits';
+  roomExit[57,0] := 1; roomExit[57,1] := 58; roomExit[57,2] := 58; roomExit[57,3] := 58; roomExit[57,4] := 5; roomExit[57,5] := 58;
 
-  rmName[58] := ' H E L L ';
-  rmExit[58,0] := 0; rmExit[58,1] := 0; rmExit[58,2] := 0; rmExit[58,3] := 0; rmExit[58,4] := 0; rmExit[58,5] := 0;
+  roomName[58] := ' H E L L ';
+  roomExit[58,0] := 0; roomExit[58,1] := 0; roomExit[58,2] := 0; roomExit[58,3] := 0; roomExit[58,4] := 0; roomExit[58,5] := 0;
 end;
 
 procedure InitObjects;
 begin
-  obName[0] := ''; obKey[0] := ''; obSize[0] := 0; obLoc[0] := 0;
+  objectName[0] := ''; objectKeyword[0] := ''; objectSize[0] := 0; objectLocation[0] := 0;
 
-  obName[1] := 'MAILBOX (name on it:  Hubie Marsten)'; obKey[1] := 'mai'; obSize[1] := 1; obLoc[1] := 3;
-  obName[2] := 'ring of keys'; obKey[2] := 'key'; obSize[2] := 0; obLoc[2] := 0;
-  obName[3] := 'old letter'; obKey[3] := 'let'; obSize[3] := 0; obLoc[3] := 0;
-  obName[4] := 'LARGE PADLOCKED DOOR'; obKey[4] := 'doo'; obSize[4] := 1; obLoc[4] := 7;
-  obName[5] := 'OPEN DOOR'; obKey[5] := 'doo'; obSize[5] := 1; obLoc[5] := 0;
-  obName[6] := 'doormat'; obKey[6] := 'mat'; obSize[6] := 0; obLoc[6] := 7;
-  obName[7] := 'BUTTON BY DOOR (doorbell?)'; obKey[7] := 'but'; obSize[7] := 1; obLoc[7] := 7;
-  obName[8] := 'SIGN - LEAVE TREASURE HERE SAYS SCORE'; obKey[8] := 'sig'; obSize[8] := 1; obLoc[8] := 7;
-  obName[9] := 'FURNITURE'; obKey[9] := 'fur'; obSize[9] := 1; obLoc[9] := 8;
-  obName[10] := 'TABLE & CHAIRS'; obKey[10] := 'tab'; obSize[10] := 1; obLoc[10] := 9;
-  obName[11] := '*silver candlesticks*'; obKey[11] := 'can'; obSize[11] := 0; obLoc[11] := 9;
-  obName[12] := '*silver knife*'; obKey[12] := 'kni'; obSize[12] := 0; obLoc[12] := 10;
-  obName[13] := 'pool of blood'; obKey[13] := 'blo'; obSize[13] := 1; obLoc[13] := 10;
-  obName[14] := 'BIG MAC'; obKey[14] := 'big'; obSize[14] := 0; obLoc[14] := 10;
-  obName[15] := 'vial of strange liquid'; obKey[15] := 'via'; obSize[15] := 0; obLoc[15] := 11;
-  obName[16] := '*wallet full of $100s*'; obKey[16] := 'wal'; obSize[16] := 0; obLoc[16] := 12;
-  obName[17] := 'DESK'; obKey[17] := 'des'; obSize[17] := 1; obLoc[17] := 14;
-  obName[18] := 'slip of paper'; obKey[18] := 'pap'; obSize[18] := 0; obLoc[18] := 0;
-  obName[19] := 'magic gun'; obKey[19] := 'gun'; obSize[19] := 0; obLoc[19] := 0;
-  obName[20] := '*gold watch*'; obKey[20] := 'wat'; obSize[20] := 0; obLoc[20] := 18;
-  obName[21] := '*rare painting*'; obKey[21] := 'pai'; obSize[21] := 0; obLoc[21] := 18;
-  obName[22] := 'red book'; obKey[22] := 'red'; obSize[22] := 0; obLoc[22] := 19;
-  obName[23] := 'blue book'; obKey[23] := 'blu'; obSize[23] := 0; obLoc[23] := 19;
-  obName[24] := 'green book'; obKey[24] := 'gre'; obSize[24] := 0; obLoc[24] := 19;
-  obName[25] := '*gold book*'; obKey[25] := 'gol'; obSize[25] := 0; obLoc[25] := 0;
-  obName[26] := 'CLOSET'; obKey[26] := 'xxx'; obSize[26] := 1; obLoc[26] := 20;
-  obName[27] := 'bed'; obKey[27] := 'bed'; obSize[27] := 1; obLoc[27] := 20;
-  obName[28] := '*oriental rug*'; obKey[28] := 'rug'; obSize[28] := 0; obLoc[28] := 20;
-  obName[29] := 'cloths'; obKey[29] := 'clo'; obSize[29] := 1; obLoc[29] := 21;
-  obName[30] := '*mink*'; obKey[30] := 'min'; obSize[30] := 0; obLoc[30] := 21;
-  obName[31] := '*gold medal*'; obKey[31] := 'med'; obSize[31] := 0; obLoc[31] := 22;
-  obName[32] := 'crib'; obKey[32] := 'cri'; obSize[32] := 1; obLoc[32] := 23;
-  obName[33] := '* $1000 savings bond *'; obKey[33] := 'bon'; obSize[33] := 0; obLoc[33] := 23;
-  obName[34] := 'toilet'; obKey[34] := 'toi'; obSize[34] := 1; obLoc[34] := 24;
-  obName[35] := 'sink'; obKey[35] := 'sin'; obSize[35] := 1; obLoc[35] := 24;
-  obName[36] := 'a bubbling potion'; obKey[36] := 'pot'; obSize[36] := 0; obLoc[36] := 24;
-  obName[37] := 'stairs going down'; obKey[37] := 'sta'; obSize[37] := 1; obLoc[37] := 26;
-  obName[38] := 'wooden cross'; obKey[38] := 'cro'; obSize[38] := 0; obLoc[38] := 26;
-  obName[39] := 'CLOSET'; obKey[39] := 'xxx'; obSize[39] := 1; obLoc[39] := 28;
-  obName[40] := '*pearl necklace*'; obKey[40] := 'nec'; obSize[40] := 0; obLoc[40] := 28;
-  obName[41] := 'bed'; obKey[41] := 'bed'; obSize[41] := 1; obLoc[41] := 28;
-  obName[42] := '*velvet pillow*'; obKey[42] := 'pil'; obSize[42] := 0; obLoc[42] := 28;
-  obName[43] := 'ladder'; obKey[43] := 'lad'; obSize[43] := 1; obLoc[43] := 29;
-  obName[44] := 'furniture'; obKey[44] := 'fur'; obSize[44] := 1; obLoc[44] := 31;
-  obName[45] := '*Commodore PET*'; obKey[45] := 'pet'; obSize[45] := 0; obLoc[45] := 31;
-  obName[46] := 'furniture'; obKey[46] := 'fur'; obSize[46] := 1; obLoc[46] := 32;
-  obName[47] := 'cobwebs'; obKey[47] := 'cob'; obSize[47] := 1; obLoc[47] := 33;
-  obName[48] := '*rare family jewels*'; obKey[48] := 'jew'; obSize[48] := 0; obLoc[48] := 34;
-  obName[49] := 'A body hanging from a noose (Hubie?)'; obKey[49] := 'bod'; obSize[49] := 1; obLoc[49] := 35;
-  obName[50] := 'old trunk'; obKey[50] := 'tru'; obSize[50] := 1; obLoc[50] := 35;
-  obName[51] := '*rare coins*'; obKey[51] := 'coi'; obSize[51] := 0; obLoc[51] := 0;
-  obName[52] := '*bottle of rare imported wine*'; obKey[52] := 'win'; obSize[52] := 0; obLoc[52] := 39;
-  obName[53] := 'An old wooden Coffin'; obKey[53] := 'cof'; obSize[53] := 1; obLoc[53] := 40;
-  obName[54] := 'A dangerous GOBLIN'; obKey[54] := 'gob'; obSize[54] := 2; obLoc[54] := 45;
-  obName[55] := 'A mean TROLL'; obKey[55] := 'tro'; obSize[55] := 2; obLoc[55] := 43;
-  obName[56] := 'a torture rack'; obKey[56] := 'rac'; obSize[56] := 1; obLoc[56] := 51;
-  obName[57] := '*gold death mask*'; obKey[57] := 'mas'; obSize[57] := 0; obLoc[57] := 51;
-  obName[58] := 'GIANT OYSTER'; obKey[58] := 'oys'; obSize[58] := 1; obLoc[58] := 52;
-  obName[59] := '*sack of diamonds*'; obKey[59] := 'dia'; obSize[59] := 0; obLoc[59] := 55;
-  obName[60] := '*large ruby*'; obKey[60] := 'rub'; obSize[60] := 0; obLoc[60] := 56;
-  obName[61] := 'A GHOST'; obKey[61] := 'gho'; obSize[61] := 2; obLoc[61] := 0;
-  obName[62] := 'flashlight(on)'; obKey[62] := 'fla'; obSize[62] := 0; obLoc[62] := 0;
-  obName[63] := 'flashlight(off)'; obKey[63] := 'fla'; obSize[63] := 0; obLoc[63] := 11;
-  obName[64] := 'large rug'; obKey[64] := 'xxx'; obSize[64] := 1; obLoc[64] := 10;
-  obName[65] := 'locked trapdoor'; obKey[65] := 'tra'; obSize[65] := 1; obLoc[65] := 0;
-  obName[66] := 'open trapdoor'; obKey[66] := 'tra'; obSize[66] := 1; obLoc[66] := 0;
-  obName[67] := 'locked trapdoor'; obKey[67] := 'tra'; obSize[67] := 1; obLoc[67] := 30;
-  obName[68] := 'open trapdoor'; obKey[68] := 'tra'; obSize[68] := 1; obLoc[68] := 0;
-  obName[69] := '*giant pearl*'; obKey[69] := 'pea'; obSize[69] := 0; obLoc[69] := 0;
-  obName[70] := 'stairs going up'; obKey[70] := 'sta'; obSize[70] := 1; obLoc[70] := 13;
-  obName[71] := 'cobwebs'; obKey[71] := 'cob'; obSize[71] := 1; obLoc[71] := 8;
-  obName[72] := 'SIGN SAYS - YOU SHALL DIE....'; obKey[72] := 'sig'; obSize[72] := 1; obLoc[72] := 5;
-  obName[73] := '-Barlow the Vampire-'; obKey[73] := 'vam'; obSize[73] := 2; obLoc[73] := 0;
-  obName[74] := 'The spirit of Hubie Marston'; obKey[74] := 'spi'; obSize[74] := 1; obLoc[74] := 0;
-  obName[75] := 'empty vial'; obKey[75] := 'via'; obSize[75] := 0; obLoc[75] := 0;
-  obName[76] := 'sweet smelling broken glass'; obKey[76] := 'gla'; obSize[76] := 0; obLoc[76] := 0;
-  obName[77] := 'PASSAGE'; obKey[77] := 'pas'; obSize[77] := 1; obLoc[77] := 0;
-  obName[78] := 'empty bottle'; obKey[78] := 'bot'; obSize[78] := 0; obLoc[78] := 0;
+  objectName[1] := 'MAILBOX (name on it:  Hubie Marsten)'; objectKeyword[1] := 'mai'; objectSize[1] := 1; objectLocation[1] := 3;
+  objectName[2] := 'ring of keys'; objectKeyword[2] := 'key'; objectSize[2] := 0; objectLocation[2] := 0;
+  objectName[3] := 'old letter'; objectKeyword[3] := 'let'; objectSize[3] := 0; objectLocation[3] := 0;
+  objectName[4] := 'LARGE PADLOCKED DOOR'; objectKeyword[4] := 'doo'; objectSize[4] := 1; objectLocation[4] := 7;
+  objectName[5] := 'OPEN DOOR'; objectKeyword[5] := 'doo'; objectSize[5] := 1; objectLocation[5] := 0;
+  objectName[6] := 'doormat'; objectKeyword[6] := 'mat'; objectSize[6] := 0; objectLocation[6] := 7;
+  objectName[7] := 'BUTTON BY DOOR (doorbell?)'; objectKeyword[7] := 'but'; objectSize[7] := 1; objectLocation[7] := 7;
+  objectName[8] := 'SIGN - LEAVE TREASURE HERE SAYS SCORE'; objectKeyword[8] := 'sig'; objectSize[8] := 1; objectLocation[8] := 7;
+  objectName[9] := 'FURNITURE'; objectKeyword[9] := 'fur'; objectSize[9] := 1; objectLocation[9] := 8;
+  objectName[10] := 'TABLE & CHAIRS'; objectKeyword[10] := 'tab'; objectSize[10] := 1; objectLocation[10] := 9;
+  objectName[11] := '*silver candlesticks*'; objectKeyword[11] := 'can'; objectSize[11] := 0; objectLocation[11] := 9;
+  objectName[12] := '*silver knife*'; objectKeyword[12] := 'kni'; objectSize[12] := 0; objectLocation[12] := 10;
+  objectName[13] := 'pool of blood'; objectKeyword[13] := 'blo'; objectSize[13] := 1; objectLocation[13] := 10;
+  objectName[14] := 'BIG MAC'; objectKeyword[14] := 'big'; objectSize[14] := 0; objectLocation[14] := 10;
+  objectName[15] := 'vial of strange liquid'; objectKeyword[15] := 'via'; objectSize[15] := 0; objectLocation[15] := 11;
+  objectName[16] := '*wallet full of $100s*'; objectKeyword[16] := 'wal'; objectSize[16] := 0; objectLocation[16] := 12;
+  objectName[17] := 'DESK'; objectKeyword[17] := 'des'; objectSize[17] := 1; objectLocation[17] := 14;
+  objectName[18] := 'slip of paper'; objectKeyword[18] := 'pap'; objectSize[18] := 0; objectLocation[18] := 0;
+  objectName[19] := 'magic gun'; objectKeyword[19] := 'gun'; objectSize[19] := 0; objectLocation[19] := 0;
+  objectName[20] := '*gold watch*'; objectKeyword[20] := 'wat'; objectSize[20] := 0; objectLocation[20] := 18;
+  objectName[21] := '*rare painting*'; objectKeyword[21] := 'pai'; objectSize[21] := 0; objectLocation[21] := 18;
+  objectName[22] := 'red book'; objectKeyword[22] := 'red'; objectSize[22] := 0; objectLocation[22] := 19;
+  objectName[23] := 'blue book'; objectKeyword[23] := 'blu'; objectSize[23] := 0; objectLocation[23] := 19;
+  objectName[24] := 'green book'; objectKeyword[24] := 'gre'; objectSize[24] := 0; objectLocation[24] := 19;
+  objectName[25] := '*gold book*'; objectKeyword[25] := 'gol'; objectSize[25] := 0; objectLocation[25] := 0;
+  objectName[26] := 'CLOSET'; objectKeyword[26] := 'xxx'; objectSize[26] := 1; objectLocation[26] := 20;
+  objectName[27] := 'bed'; objectKeyword[27] := 'bed'; objectSize[27] := 1; objectLocation[27] := 20;
+  objectName[28] := '*oriental rug*'; objectKeyword[28] := 'rug'; objectSize[28] := 0; objectLocation[28] := 20;
+  objectName[29] := 'cloths'; objectKeyword[29] := 'clo'; objectSize[29] := 1; objectLocation[29] := 21;
+  objectName[30] := '*mink*'; objectKeyword[30] := 'min'; objectSize[30] := 0; objectLocation[30] := 21;
+  objectName[31] := '*gold medal*'; objectKeyword[31] := 'med'; objectSize[31] := 0; objectLocation[31] := 22;
+  objectName[32] := 'crib'; objectKeyword[32] := 'cri'; objectSize[32] := 1; objectLocation[32] := 23;
+  objectName[33] := '* $1000 savings bond *'; objectKeyword[33] := 'bon'; objectSize[33] := 0; objectLocation[33] := 23;
+  objectName[34] := 'toilet'; objectKeyword[34] := 'toi'; objectSize[34] := 1; objectLocation[34] := 24;
+  objectName[35] := 'sink'; objectKeyword[35] := 'sin'; objectSize[35] := 1; objectLocation[35] := 24;
+  objectName[36] := 'a bubbling potion'; objectKeyword[36] := 'pot'; objectSize[36] := 0; objectLocation[36] := 24;
+  objectName[37] := 'stairs going down'; objectKeyword[37] := 'sta'; objectSize[37] := 1; objectLocation[37] := 26;
+  objectName[38] := 'wooden cross'; objectKeyword[38] := 'cro'; objectSize[38] := 0; objectLocation[38] := 26;
+  objectName[39] := 'CLOSET'; objectKeyword[39] := 'xxx'; objectSize[39] := 1; objectLocation[39] := 28;
+  objectName[40] := '*pearl necklace*'; objectKeyword[40] := 'nec'; objectSize[40] := 0; objectLocation[40] := 28;
+  objectName[41] := 'bed'; objectKeyword[41] := 'bed'; objectSize[41] := 1; objectLocation[41] := 28;
+  objectName[42] := '*velvet pillow*'; objectKeyword[42] := 'pil'; objectSize[42] := 0; objectLocation[42] := 28;
+  objectName[43] := 'ladder'; objectKeyword[43] := 'lad'; objectSize[43] := 1; objectLocation[43] := 29;
+  objectName[44] := 'furniture'; objectKeyword[44] := 'fur'; objectSize[44] := 1; objectLocation[44] := 31;
+  objectName[45] := '*Commodore PET*'; objectKeyword[45] := 'pet'; objectSize[45] := 0; objectLocation[45] := 31;
+  objectName[46] := 'furniture'; objectKeyword[46] := 'fur'; objectSize[46] := 1; objectLocation[46] := 32;
+  objectName[47] := 'cobwebs'; objectKeyword[47] := 'cob'; objectSize[47] := 1; objectLocation[47] := 33;
+  objectName[48] := '*rare family jewels*'; objectKeyword[48] := 'jew'; objectSize[48] := 0; objectLocation[48] := 34;
+  objectName[49] := 'A body hanging from a noose (Hubie?)'; objectKeyword[49] := 'bod'; objectSize[49] := 1; objectLocation[49] := 35;
+  objectName[50] := 'old trunk'; objectKeyword[50] := 'tru'; objectSize[50] := 1; objectLocation[50] := 35;
+  objectName[51] := '*rare coins*'; objectKeyword[51] := 'coi'; objectSize[51] := 0; objectLocation[51] := 0;
+  objectName[52] := '*bottle of rare imported wine*'; objectKeyword[52] := 'win'; objectSize[52] := 0; objectLocation[52] := 39;
+  objectName[53] := 'An old wooden Coffin'; objectKeyword[53] := 'cof'; objectSize[53] := 1; objectLocation[53] := 40;
+  objectName[54] := 'A dangerous GOBLIN'; objectKeyword[54] := 'gob'; objectSize[54] := 2; objectLocation[54] := 45;
+  objectName[55] := 'A mean TROLL'; objectKeyword[55] := 'tro'; objectSize[55] := 2; objectLocation[55] := 43;
+  objectName[56] := 'a torture rack'; objectKeyword[56] := 'rac'; objectSize[56] := 1; objectLocation[56] := 51;
+  objectName[57] := '*gold death mask*'; objectKeyword[57] := 'mas'; objectSize[57] := 0; objectLocation[57] := 51;
+  objectName[58] := 'GIANT OYSTER'; objectKeyword[58] := 'oys'; objectSize[58] := 1; objectLocation[58] := 52;
+  objectName[59] := '*sack of diamonds*'; objectKeyword[59] := 'dia'; objectSize[59] := 0; objectLocation[59] := 55;
+  objectName[60] := '*large ruby*'; objectKeyword[60] := 'rub'; objectSize[60] := 0; objectLocation[60] := 56;
+  objectName[61] := 'A GHOST'; objectKeyword[61] := 'gho'; objectSize[61] := 2; objectLocation[61] := 0;
+  objectName[62] := 'flashlight(on)'; objectKeyword[62] := 'fla'; objectSize[62] := 0; objectLocation[62] := 0;
+  objectName[63] := 'flashlight(off)'; objectKeyword[63] := 'fla'; objectSize[63] := 0; objectLocation[63] := 11;
+  objectName[64] := 'large rug'; objectKeyword[64] := 'xxx'; objectSize[64] := 1; objectLocation[64] := 10;
+  objectName[65] := 'locked trapdoor'; objectKeyword[65] := 'tra'; objectSize[65] := 1; objectLocation[65] := 0;
+  objectName[66] := 'open trapdoor'; objectKeyword[66] := 'tra'; objectSize[66] := 1; objectLocation[66] := 0;
+  objectName[67] := 'locked trapdoor'; objectKeyword[67] := 'tra'; objectSize[67] := 1; objectLocation[67] := 30;
+  objectName[68] := 'open trapdoor'; objectKeyword[68] := 'tra'; objectSize[68] := 1; objectLocation[68] := 0;
+  objectName[69] := '*giant pearl*'; objectKeyword[69] := 'pea'; objectSize[69] := 0; objectLocation[69] := 0;
+  objectName[70] := 'stairs going up'; objectKeyword[70] := 'sta'; objectSize[70] := 1; objectLocation[70] := 13;
+  objectName[71] := 'cobwebs'; objectKeyword[71] := 'cob'; objectSize[71] := 1; objectLocation[71] := 8;
+  objectName[72] := 'SIGN SAYS - YOU SHALL DIE....'; objectKeyword[72] := 'sig'; objectSize[72] := 1; objectLocation[72] := 5;
+  objectName[73] := '-Barlow the Vampire-'; objectKeyword[73] := 'vam'; objectSize[73] := 2; objectLocation[73] := 0;
+  objectName[74] := 'The spirit of Hubie Marston'; objectKeyword[74] := 'spi'; objectSize[74] := 1; objectLocation[74] := 0;
+  objectName[75] := 'empty vial'; objectKeyword[75] := 'via'; objectSize[75] := 0; objectLocation[75] := 0;
+  objectName[76] := 'sweet smelling broken glass'; objectKeyword[76] := 'gla'; objectSize[76] := 0; objectLocation[76] := 0;
+  objectName[77] := 'PASSAGE'; objectKeyword[77] := 'pas'; objectSize[77] := 1; objectLocation[77] := 0;
+  objectName[78] := 'empty bottle'; objectKeyword[78] := 'bot'; objectSize[78] := 0; objectLocation[78] := 0;
 end;
 
 procedure InitMessages;
 begin
-  msg[1] := 'nothing happens';
-  msg[2] := 'how should I know what to do';
-  msg[3] := 'I''M DEAD';
-  msg[4] := 'a couple things fell out';
-  msg[5] := 'something fell out';
-  msg[6] := 'the trapdoor creaks open';
-  msg[7] := 'the door creaks open';
-  msg[8] := 'It says: those who enter may not leave  here''s a hint they may need';
-  msg[9] := 'If something is too heavy to take, try   to move it';
-  msg[10] := 'OK, I moved it';
-  msg[11] := 'OK, weird laughing comes from the house';
-  msg[12] := 'the troll drinks the potion and turns   into a frog, the frog hops away';
-  msg[13] := 'you got him.  The goblin and disappears in a cloud of black smoke';
-  msg[14] := 'Barlow turns to dust                    and blows away';
-  msg[15] := 'The ghost vaporizes';
-  msg[16] := 'It''s poison  I''m dead!';
-  msg[17] := 'Everything changes and....';
-  msg[18] := 'BANG BANG BANG';
-  msg[19] := 'you got him';
-  msg[20] := 'you missed';
-  msg[21] := 'it says - Hubie is harmless';
-  msg[22] := 'It says:';
-  msg[23] := 'This book is a treasure';
-  msg[24] := 'The bottle of wine drops with a CRASH!';
-  msg[25] := 'It''s empty';
-  msg[26] := 'some treasures may be weapons           shoot goblin-troll potion!';
-  msg[27] := 'say CBM';
-  msg[28] := 'Kill a Vampire with *silver*            when trapped, take a drink';
-  msg[29] := 'indentify book by color';
-  msg[30] := 'I don''t have it';
-  msg[31] := 'Where?!?';
-  msg[32] := 'The BLUE book turns into a *gold* book';
-  msg[33] := 'thanks I was hungery';
-  msg[34] := 'the flashlight is on';
-  msg[35] := 'the flashlight is off';
-  msg[36] := 'I can''t move that!';
-  msg[37] := 'there was something under it';
-  msg[38] := 'OK,';
-  msg[39] := 'It''s locked';
-  msg[40] := 'It''s to heavy';
-  msg[41] := 'I need a key';
-  msg[42] := 'The oyster opens up to eat the BIG MAC  and a pearl rolls out!';
-  msg[43] := 'The bottle lands softly on the pillow';
-  msg[44] := 'A voice booms out.....PLEASE LEAVE IT ALONE!';
-  msg[45] := 'The lid of the Coffin rises and Barlow  the vampire jumps out!!!';
-  msg[46] := 'I don''t see it here';
-  msg[47] := 'HOW?!?';
-  msg[48] := 'I have nothing to read';
-  msg[49] := 'NOTWELCOME';
-  msg[50] := 'closets aren''t closed';
-  msg[51] := 'I have nothing to eat';
-  msg[52] := 'I have nothing to drink';
-  msg[53] := 'I don''t have a gun';
-  msg[54] := 'I don''t have a knife';
-  msg[55] := 'Barlow stops me!';
-  msg[56] := 'There is nothing to attack here';
-  msg[57] := 'The bullets bounce off the shell!';
-  msg[58] := 'He only eats big macs and I don''t       have one';
-  msg[59] := 'hic hic, burp.  Boy was that good!';
+  messageTable[1] := 'nothing happens';
+  messageTable[2] := 'how should I know what to do';
+  messageTable[3] := 'I''M DEAD';
+  messageTable[4] := 'a couple things fell out';
+  messageTable[5] := 'something fell out';
+  messageTable[6] := 'the trapdoor creaks open';
+  messageTable[7] := 'the door creaks open';
+  messageTable[8] := 'It says: those who enter may not leave  here''s a hint they may need';
+  messageTable[9] := 'If something is too heavy to take, try   to move it';
+  messageTable[10] := 'OK, I moved it';
+  messageTable[11] := 'OK, weird laughing comes from the house';
+  messageTable[12] := 'the troll drinks the potion and turns   into a frog, the frog hops away';
+  messageTable[13] := 'you got him.  The goblin and disappears in a cloud of black smoke';
+  messageTable[14] := 'Barlow turns to dust                    and blows away';
+  messageTable[15] := 'The ghost vaporizes';
+  messageTable[16] := 'It''s poison  I''m dead!';
+  messageTable[17] := 'Everything changes and....';
+  messageTable[18] := 'BANG BANG BANG';
+  messageTable[19] := 'you got him';
+  messageTable[20] := 'you missed';
+  messageTable[21] := 'it says - Hubie is harmless';
+  messageTable[22] := 'It says:';
+  messageTable[23] := 'This book is a treasure';
+  messageTable[24] := 'The bottle of wine drops with a CRASH!';
+  messageTable[25] := 'It''s empty';
+  messageTable[26] := 'some treasures may be weapons           shoot goblin-troll potion!';
+  messageTable[27] := 'say CBM';
+  messageTable[28] := 'Kill a Vampire with *silver*            when trapped, take a drink';
+  messageTable[29] := 'indentify book by color';
+  messageTable[30] := 'I don''t have it';
+  messageTable[31] := 'Where?!?';
+  messageTable[32] := 'The BLUE book turns into a *gold* book';
+  messageTable[33] := 'thanks I was hungery';
+  messageTable[34] := 'the flashlight is on';
+  messageTable[35] := 'the flashlight is off';
+  messageTable[36] := 'I can''t move that!';
+  messageTable[37] := 'there was something under it';
+  messageTable[38] := 'OK,';
+  messageTable[39] := 'It''s locked';
+  messageTable[40] := 'It''s to heavy';
+  messageTable[41] := 'I need a key';
+  messageTable[42] := 'The oyster opens up to eat the BIG MAC  and a pearl rolls out!';
+  messageTable[43] := 'The bottle lands softly on the pillow';
+  messageTable[44] := 'A voice booms out.....PLEASE LEAVE IT ALONE!';
+  messageTable[45] := 'The lid of the Coffin rises and Barlow  the vampire jumps out!!!';
+  messageTable[46] := 'I don''t see it here';
+  messageTable[47] := 'HOW?!?';
+  messageTable[48] := 'I have nothing to read';
+  messageTable[49] := 'NOTWELCOME';
+  messageTable[50] := 'closets aren''t closed';
+  messageTable[51] := 'I have nothing to eat';
+  messageTable[52] := 'I have nothing to drink';
+  messageTable[53] := 'I don''t have a gun';
+  messageTable[54] := 'I don''t have a knife';
+  messageTable[55] := 'Barlow stops me!';
+  messageTable[56] := 'There is nothing to attack here';
+  messageTable[57] := 'The bullets bounce off the shell!';
+  messageTable[58] := 'He only eats big macs and I don''t       have one';
+  messageTable[59] := 'hic hic, burp.  Boy was that good!';
 end;
 
 procedure InitCommands;
 var
   i: Integer;
 begin
-  for i := 1 to MaxC do cmd[i] := '';
-  cmd[1]  := '1000000000000000100000000000000000';
-  cmd[2]  := '1100000000000000110000000000000000';
-  cmd[3]  := '1200000000000000120000000000000000';
-  cmd[4]  := '1300000000000000130000000000000000';
-  cmd[5]  := '0712055800000000014000000000000000';
-  cmd[6]  := '0720055300000000014000000000000000';
-  cmd[7]  := '0726055000000000014000000000000000';
-  cmd[8]  := '0717000000000000012900000000000000';
-  cmd[9]  := '0731000000000000014400000000000000';
-  cmd[10] := '0727056400000000014000000000000000';
-  cmd[11] := '0732056300000000146300000000000000';
-  cmd[12] := '0802055803690114014200046900031400';
-  cmd[13] := '0802055800000000015800000000000000';
-  cmd[14] := '0821055501360000011200035500033600';
-  cmd[15] := '0832016300000000156300000000000000';
-  cmd[16] := '0817000000000000012900000000000000';
-  cmd[17] := '0905050400000000013900000000000000';
-  cmd[18] := '0833015205420000014300155200000000';
-  cmd[19] := '0833015200000000012400155200025276';
-  cmd[20] := '0700000000000000070000000000000000';
-  cmd[21] := '0800000000000000080000000000000000';
-  cmd[22] := '0905050500000000050800000000000000';
-  cmd[23] := '0905056600000000053600000000000000';
-  cmd[24] := '0905056800000000053300000000000000';
-  cmd[25] := '0919052600000000052100000000000000';
-  cmd[26] := '0919053900000000052900000000000000';
-  cmd[27] := '0935057700000000054100000000000000';
-  cmd[28] := '1400000000000000010200000000000000';
-  cmd[29] := '1507050700000000011100000000000000';
-  cmd[30] := '1604010300000000010800010900000000';
-  cmd[31] := '1606050600000000012200014900000000';
-  cmd[32] := '1613011800000000012100000000000000';
-  cmd[33] := '1617000000000000012900000000000000';
-  cmd[34] := '1614012200000000012200012600000000';
-  cmd[35] := '1615012300000000012200012700000000';
-  cmd[36] := '1616012400000000012200012800000000';
-  cmd[37] := '1618012500000000012200012300000000';
-  cmd[38] := '1600000000000000014800000000000000';
-  cmd[39] := '1720037305530000012500014500047300';
-  cmd[40] := '1720055300000000012500000000000000';
-  cmd[41] := '1705050401020000010700020405170108';
-  cmd[42] := '1701050103020303010400040300040200';
-  cmd[43] := '1701050100000000012500000000000000';
-  cmd[44] := '1705056501020000010600026566170536';
-  cmd[45] := '1705056500000000014100000000000000';
-  cmd[46] := '1705050400000000014100000000000000';
-  cmd[47] := '1705056701020000010600026768170433';
-  cmd[48] := '1705056700000000014100000000000000';
-  cmd[49] := '1719000000000000015000000000000000';
-  cmd[50] := '1711051703180319010400041800041900';
-  cmd[51] := '1726055003510000010500045100000000';
-  cmd[52] := '1726055000000000012500000000000000';
-  cmd[53] := '1711051700000000012500000000000000';
-  cmd[54] := '1820057305530000015500000000000000';
-  cmd[55] := '1820037305530000014500015500047300';
-  cmd[56] := '1827056403650366011000013700046500';
-  cmd[57] := '1820055303770000011000013700047700';
-  cmd[58] := '1812000000000000013600000000000000';
-  cmd[59] := '1900056101190000011800180000000000';
-  cmd[60] := '1900057401190000011800010100000000';
-  cmd[61] := '1900055401190000011800011300035400';
-  cmd[62] := '1900055501190000011800010100000000';
-  cmd[63] := '1900055801190000015700000000000000';
-  cmd[64] := '1900057301190000011800010100000000';
-  cmd[65] := '1900011900000000015600000000000000';
-  cmd[66] := '1900000000000000015300000000000000';
-  cmd[67] := '2000000000000000013100000000000000';
-  cmd[68] := '2100000000000000014700000000000000';
-  cmd[69] := '2200011400000000013300031400000000';
-  cmd[70] := '2200000000000000015100000000000000';
-  cmd[71] := '2323054300000000053000000000000000';
-  cmd[72] := '2400016200000000013500026263770000';
-  cmd[73] := '2400016300000000013400026263770000';
-  cmd[74] := '2500016300000000013400026263770000';
-  cmd[75] := '2600016200000000013500026263770000';
-  cmd[76] := '2710011502550000011700021575050600';
-  cmd[77] := '2710011500000000011700021575050800';
-  cmd[78] := '2733015200000000015900025278000000';
-  cmd[79] := '2721013600000000011600033600060000';
-  cmd[80] := '2721000000000000013000000000000000';
-  cmd[81] := '2710000000000000013000000000000000';
-  cmd[82] := '2700000000000000015200000000000000';
-  cmd[83] := '2800012300000000013200022325000000';
-  cmd[84] := '2800000000000000010100000000000000';
-  cmd[85] := '2934000000000000160000000000000000';
-  cmd[86] := '3008057301120000011400097399041200';
-  cmd[87] := '3008011200000000010100041200000000';
-  cmd[88] := '3008000000000000015400000000000000';
-  cmd[89] := '3100057301120000011400097399000000';
-  cmd[90] := '3100011200000000010100000000000000';
-  cmd[91] := '3100000000000000015400000000000000';
+  for i := 1 to MaxCommands do commandTable[i] := '';
+  commandTable[1]  := '1000000000000000100000000000000000';
+  commandTable[2]  := '1100000000000000110000000000000000';
+  commandTable[3]  := '1200000000000000120000000000000000';
+  commandTable[4]  := '1300000000000000130000000000000000';
+  commandTable[5]  := '0712055800000000014000000000000000';
+  commandTable[6]  := '0720055300000000014000000000000000';
+  commandTable[7]  := '0726055000000000014000000000000000';
+  commandTable[8]  := '0717000000000000012900000000000000';
+  commandTable[9]  := '0731000000000000014400000000000000';
+  commandTable[10] := '0727056400000000014000000000000000';
+  commandTable[11] := '0732056300000000146300000000000000';
+  commandTable[12] := '0802055803690114014200046900031400';
+  commandTable[13] := '0802055800000000015800000000000000';
+  commandTable[14] := '0821055501360000011200035500033600';
+  commandTable[15] := '0832016300000000156300000000000000';
+  commandTable[16] := '0817000000000000012900000000000000';
+  commandTable[17] := '0905050400000000013900000000000000';
+  commandTable[18] := '0833015205420000014300155200000000';
+  commandTable[19] := '0833015200000000012400155200025276';
+  commandTable[20] := '0700000000000000070000000000000000';
+  commandTable[21] := '0800000000000000080000000000000000';
+  commandTable[22] := '0905050500000000050800000000000000';
+  commandTable[23] := '0905056600000000053600000000000000';
+  commandTable[24] := '0905056800000000053300000000000000';
+  commandTable[25] := '0919052600000000052100000000000000';
+  commandTable[26] := '0919053900000000052900000000000000';
+  commandTable[27] := '0935057700000000054100000000000000';
+  commandTable[28] := '1400000000000000010200000000000000';
+  commandTable[29] := '1507050700000000011100000000000000';
+  commandTable[30] := '1604010300000000010800010900000000';
+  commandTable[31] := '1606050600000000012200014900000000';
+  commandTable[32] := '1613011800000000012100000000000000';
+  commandTable[33] := '1617000000000000012900000000000000';
+  commandTable[34] := '1614012200000000012200012600000000';
+  commandTable[35] := '1615012300000000012200012700000000';
+  commandTable[36] := '1616012400000000012200012800000000';
+  commandTable[37] := '1618012500000000012200012300000000';
+  commandTable[38] := '1600000000000000014800000000000000';
+  commandTable[39] := '1720037305530000012500014500047300';
+  commandTable[40] := '1720055300000000012500000000000000';
+  commandTable[41] := '1705050401020000010700020405170108';
+  commandTable[42] := '1701050103020303010400040300040200';
+  commandTable[43] := '1701050100000000012500000000000000';
+  commandTable[44] := '1705056501020000010600026566170536';
+  commandTable[45] := '1705056500000000014100000000000000';
+  commandTable[46] := '1705050400000000014100000000000000';
+  commandTable[47] := '1705056701020000010600026768170433';
+  commandTable[48] := '1705056700000000014100000000000000';
+  commandTable[49] := '1719000000000000015000000000000000';
+  commandTable[50] := '1711051703180319010400041800041900';
+  commandTable[51] := '1726055003510000010500045100000000';
+  commandTable[52] := '1726055000000000012500000000000000';
+  commandTable[53] := '1711051700000000012500000000000000';
+  commandTable[54] := '1820057305530000015500000000000000';
+  commandTable[55] := '1820037305530000014500015500047300';
+  commandTable[56] := '1827056403650366011000013700046500';
+  commandTable[57] := '1820055303770000011000013700047700';
+  commandTable[58] := '1812000000000000013600000000000000';
+  commandTable[59] := '1900056101190000011800180000000000';
+  commandTable[60] := '1900057401190000011800010100000000';
+  commandTable[61] := '1900055401190000011800011300035400';
+  commandTable[62] := '1900055501190000011800010100000000';
+  commandTable[63] := '1900055801190000015700000000000000';
+  commandTable[64] := '1900057301190000011800010100000000';
+  commandTable[65] := '1900011900000000015600000000000000';
+  commandTable[66] := '1900000000000000015300000000000000';
+  commandTable[67] := '2000000000000000013100000000000000';
+  commandTable[68] := '2100000000000000014700000000000000';
+  commandTable[69] := '2200011400000000013300031400000000';
+  commandTable[70] := '2200000000000000015100000000000000';
+  commandTable[71] := '2323054300000000053000000000000000';
+  commandTable[72] := '2400016200000000013500026263770000';
+  commandTable[73] := '2400016300000000013400026263770000';
+  commandTable[74] := '2500016300000000013400026263770000';
+  commandTable[75] := '2600016200000000013500026263770000';
+  commandTable[76] := '2710011502550000011700021575050600';
+  commandTable[77] := '2710011500000000011700021575050800';
+  commandTable[78] := '2733015200000000015900025278000000';
+  commandTable[79] := '2721013600000000011600033600060000';
+  commandTable[80] := '2721000000000000013000000000000000';
+  commandTable[81] := '2710000000000000013000000000000000';
+  commandTable[82] := '2700000000000000015200000000000000';
+  commandTable[83] := '2800012300000000013200022325000000';
+  commandTable[84] := '2800000000000000010100000000000000';
+  commandTable[85] := '2934000000000000160000000000000000';
+  commandTable[86] := '3008057301120000011400097399041200';
+  commandTable[87] := '3008011200000000010100041200000000';
+  commandTable[88] := '3008000000000000015400000000000000';
+  commandTable[89] := '3100057301120000011400097399000000';
+  commandTable[90] := '3100011200000000010100000000000000';
+  commandTable[91] := '3100000000000000015400000000000000';
 end;
 
 procedure InitSynonyms;
 begin
-  w0 := 13;
-  w1[1] := 'n';  w2[1] := 'nor';
-  w1[2] := 's';  w2[2] := 'sou';
-  w1[3] := 'e';  w2[3] := 'eas';
-  w1[4] := 'w';  w2[4] := 'wes';
-  w1[5] := 'u';  w2[5] := 'up';
-  w1[6] := 'd';  w2[6] := 'dow';
-  w1[7] := 'get'; w2[7] := 'tak';
-
-  // "use" should not be a synonym of "shoot"
-  //w1[8] := 'use'; w2[8] := 'sho';
-
-  w1[9] := 'sea'; w2[9] := 'ope';
-  w1[10] := 'att'; w2[10] := 'kil';
-  w1[11] := 'fir'; w2[11] := 'sho';
-  w1[12] := 'fee'; w2[12] := 'dro';
-  w1[13] := 'giv'; w2[13] := 'dro';
-  e4 := 'end';
+  synonymCount := 13;
+  synonymShort[1] := 'n';  synonymLong[1] := 'nor';
+  synonymShort[2] := 's';  synonymLong[2] := 'sou';
+  synonymShort[3] := 'e';  synonymLong[3] := 'eas';
+  synonymShort[4] := 'w';  synonymLong[4] := 'wes';
+  synonymShort[5] := 'u';  synonymLong[5] := 'up';
+  synonymShort[6] := 'd';  synonymLong[6] := 'dow';
+  synonymShort[7] := 'get'; synonymLong[7] := 'tak';
+  // synonymShort[8] := 'use'; synonymLong[8] := 'sho';  // removed: 'use' was mapped to 'shoot'
+  synonymShort[9] := 'sea'; synonymLong[9] := 'ope';
+  synonymShort[10] := 'att'; synonymLong[10] := 'kil';
+  synonymShort[11] := 'fir'; synonymLong[11] := 'sho';
+  synonymShort[12] := 'fee'; synonymLong[12] := 'dro';
+  synonymShort[13] := 'giv'; synonymLong[13] := 'dro';
+  endCommand := 'end';
 end;
 
 procedure InitEvents;
 begin
-  eMsg[1] := 'A black cat runs by';
-  eMsg[2] := 'I heard a funny noise';
-  eMsg[3] := 'I think I hear footsteps';
-  eMsg[4] := 'Was that a scream I heard ?';
-  eMsg[5] := 'I feel a chill';
-  eMsg[6] := 'A spider runs by';
-  eMsg[7] := 'I think I heard a door slam';
-  hsMsg[1] := 'Who dares to enter this house';
-  hsMsg[2] := 'You shall die...';
-  hsMsg[3] := 'Get out, get out before it''s too late';
-  e5 := 'the end';
+  eventMessage[1] := 'A black cat runs by';
+  eventMessage[2] := 'I heard a funny noise';
+  eventMessage[3] := 'I think I hear footsteps';
+  eventMessage[4] := 'Was that a scream I heard ?';
+  eventMessage[5] := 'I feel a chill';
+  eventMessage[6] := 'A spider runs by';
+  eventMessage[7] := 'I think I heard a door slam';
+  hubieMessage[1] := 'Who dares to enter this house';
+  hubieMessage[2] := 'You shall die...';
+  hubieMessage[3] := 'Get out, get out before it''s too late';
+  endString := 'the end';
 end;
 
-procedure DoLightCheck;
+procedure CheckLight;
 begin
-  if (lu < 50) and (lf = 2) and (obLoc[lt] <> 0) then
+  if (lightUnits < 50) and (lightFlag = 2) and (objectLocation[lightObject] <> 0) then
   begin
     Writeln('You''re flashlight is getting dim!');
-    lf := 1;
+    lightFlag := 1;
   end;
-  if (lu < 38) and (lf = 1) and (obLoc[lt] <> 0) then
+  if (lightUnits < 38) and (lightFlag = 1) and (objectLocation[lightObject] <> 0) then
   begin
     Writeln('You''re flashlight is getting dimmer!!');
-    lf := 0;
+    lightFlag := 0;
   end;
-  if (lu < 25) and (lu > 0) and (obLoc[lt] <> 0) then
+  if (lightUnits < 25) and (lightUnits > 0) and (objectLocation[lightObject] <> 0) then
   begin
     Writeln;
-    Writeln('LIGHT RUNS OUT IN ', lu, ' TURNS!');
+    Writeln('LIGHT RUNS OUT IN ', lightUnits, ' TURNS!');
   end;
-  if (lu = 0) and (lf = 0) then
+  if (lightUnits = 0) and (lightFlag = 0) then
   begin
     Writeln('LIGHT HAS RUN OUT!!!');
-    lf := -1;
-    obLoc[lt] := 0;
+    lightFlag := -1;
+    objectLocation[lightObject] := 0;
   end;
 end;
 
-procedure DoRandomEvents;
+procedure ProcessRandomEvents;
 label L4030, L3999;
 begin
-  if (obLoc[54] = r) or (obLoc[55] = r) or (obLoc[73] = r) or (obLoc[74] = r) then
+  if (objectLocation[54] = currentRoom) or (objectLocation[55] = currentRoom) or (objectLocation[73] = currentRoom) or (objectLocation[74] = currentRoom) then
   begin
-    obLoc[61] := 0;
+    objectLocation[61] := 0;
     Exit;
   end;
-  if (r < 8) or (r = lb) or (r = dt) or (ht < 35) then Exit;
-  if gn = 0 then Exit;
-  if ga = 1 then
+  if (currentRoom < 8) or (currentRoom = limboRoom) or (currentRoom = deathRoom) or (turnCount < 35) then Exit;
+  if ghostCount = 0 then Exit;
+  if ghostActive = 1 then
   begin
-    obLoc[61] := r;
+    objectLocation[61] := currentRoom;
     goto L4030;
   end;
-  if RndRange(32) = 7 then
+  if RandomRange(32) = 7 then
   begin
-    ga := 1;
+    ghostActive := 1;
     goto L3999;
   end;
-  obLoc[61] := 0;
+  objectLocation[61] := 0;
   Exit;
 L4030:
   Writeln('There is a threatening little ghost in  the room with you!');
-  gf := 1 - gf;
-  if gf <> 0 then Exit;
+  ghostFlag := 1 - ghostFlag;
+  if ghostFlag <> 0 then Exit;
   Writeln('The ghost attacks!');
-  if RndRange(6) = 2 then
+  if RandomRange(6) = 2 then
   begin
     Writeln('It got you!');
-    r := lb;
-    ga := 0;
-    gk := 1;
+    currentRoom := limboRoom;
+    ghostActive := 0;
+    gameKilled := 1;
     Exit;
   end;
   Writeln('It missed!');
 L3999:
 end;
 
-procedure DoGhostAttack;
+procedure AttackGhost;
 begin
-  if RndRange(5) > 2 then
+  if RandomRange(5) > 2 then
   begin
     Writeln('You missed!');
     Exit;
   end;
   Writeln('You got him!');
   Writeln('The ghost dissapears in a white mist!');
-  gn := gn - 1;
-  ga := 0;
-  gf := 0;
-  obLoc[61] := 0;
+  ghostCount := ghostCount - 1;
+  ghostActive := 0;
+  ghostFlag := 0;
+  objectLocation[61] := 0;
 end;
 
-procedure DoRoomFlavor;
+procedure DescribeRoomEvents;
 begin
-  if r = 27 then
-    Writeln('A clock shows the time: ', Copy(tm, 1, 2), ':', Copy(tm, 3, 2));
-  if ha = 1 then
+  if currentRoom = 27 then
+    Writeln('A clock shows the time: ', Copy(timeString, 1, 2), ':', Copy(timeString, 3, 2));
+  if hubieActive = 1 then
   begin
     Writeln('The spirit of Hubie Marsten appears and says:');
-    Writeln(hsMsg[RndRange(3)], '.');
-    obLoc[74] := r;
-    ha := 0;
+    Writeln(hubieMessage[RandomRange(3)], '.');
+    objectLocation[74] := currentRoom;
+    hubieActive := 0;
   end;
-  if (RndRange(5) = 4) and (r > 6) then
-    Writeln(eMsg[RndRange(7)], '.');
-  if (r > 3) and (r < 7) and (RndRange(4) = 2) then
+  if (RandomRange(5) = 4) and (currentRoom > 6) then
+    Writeln(eventMessage[RandomRange(7)], '.');
+  if (currentRoom > 3) and (currentRoom < 7) and (RandomRange(4) = 2) then
     Writeln('The trees seem to be alive!');
-  if (r > 32) and (r < 36) and (obLoc[74] <> r) then
-    if RndRange(3) = 2 then ha := 1;
-  if (obLoc[74] = r) and (RndRange(3) = 2) then
+  if (currentRoom > 32) and (currentRoom < 36) and (objectLocation[74] <> currentRoom) then
+    if RandomRange(3) = 2 then hubieActive := 1;
+  if (objectLocation[74] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The spirit vanished??');
-    obLoc[74] := 0;
-    ha := 0;
+    objectLocation[74] := 0;
+    hubieActive := 0;
   end;
-  if (obLoc[54] = r) and (RndRange(3) = 2) then
+  if (objectLocation[54] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The goblin attack with an axe in hand!');
-    if RndRange(6) = 4 then
+    if RandomRange(6) = 4 then
     begin
       Writeln('CRUNCH!!     He gets you!');
-      r := lb;
-      gk := 1;
+      currentRoom := limboRoom;
+      gameKilled := 1;
       Exit;
     end;
     Writeln('WHOOSH!     He misses!');
   end;
-  if (obLoc[55] = r) and (RndRange(3) = 2) then
+  if (objectLocation[55] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('The troll attacks!');
-    if RndRange(7) = 6 then
+    if RandomRange(7) = 6 then
     begin
       Writeln('He smashes your skull!');
-      r := lb;
-      gk := 1;
+      currentRoom := limboRoom;
+      gameKilled := 1;
       Exit;
     end;
     Writeln('He missed!');
   end;
-  if (obLoc[73] = r) and (RndRange(3) = 2) then
+  if (objectLocation[73] = currentRoom) and (RandomRange(3) = 2) then
   begin
     Writeln('Barlow attacks!');
-    if obLoc[38] = -1 then
+    if objectLocation[38] = -1 then
     begin
       Writeln('He sees your cross and backs off!');
       Exit;
     end;
-    if RndRange(4) = 3 then
+    if RandomRange(4) = 3 then
     begin
       Writeln('He got you!!');
-      r := lb;
-      gk := 1;
+      currentRoom := limboRoom;
+      gameKilled := 1;
       Exit;
     end;
     Writeln('He missed!');
   end;
 end;
 
-procedure TryTake(obj: Integer);
+procedure TakeObject(obj: Integer);
 var
-  pq, os: Integer;
+  carryIndex, carriedCount: Integer;
 begin
-  if obSize[obj] = 1 then
+  if objectSize[obj] = 1 then
   begin
     Writeln('IT''S BEYOND MY POWER TO DO THAT!');
     Exit;
   end;
-  if obSize[obj] > 1 then
+  if objectSize[obj] > 1 then
   begin
     Writeln('Don''t be stupid!');
     Exit;
   end;
-  if obLoc[obj] = -1 then
+  if objectLocation[obj] = -1 then
   begin
     Writeln('I''m already carrying it.');
     Exit;
   end;
-  if obLoc[obj] <> r then
+  if objectLocation[obj] <> currentRoom then
   begin
     Writeln('I DON''T SEE IT HERE!');
     Exit;
   end;
-  os := 0;
-  for pq := 1 to MaxO do
-    if obLoc[pq] = -1 then os := os + 1;
-  if os + 1 > ol then
+  carriedCount := 0;
+  for carryIndex := 1 to MaxObjects do
+    if objectLocation[carryIndex] = -1 then carriedCount := carriedCount + 1;
+  if carriedCount + 1 > objectLimit then
   begin
     Writeln('I''VE TOO MUCH TO CARRY');
     Exit;
   end;
   Writeln('ok,');
-  obLoc[obj] := -1;
+  objectLocation[obj] := -1;
 end;
 
-procedure TryDropTreasure;
+procedure DropTreasure;
 var
-  td, tdPct: Integer;
+  treasureIndex, treasurePlaced: Integer;
 begin
-  tdPct := 0;
-  for td := 1 to MaxO do
+  treasurePlaced := 0;
+  for treasureIndex := 1 to MaxObjects do
   begin
-    if Copy(obName[td], 1, 1) <> '*' then Continue;
-    if (td = 52) and (obLoc[td] = -1) and (obLoc[42] <> r) then
+    if Copy(objectName[treasureIndex], 1, 1) <> '*' then Continue;
+    if (treasureIndex = 52) and (objectLocation[treasureIndex] = -1) and (objectLocation[42] <> currentRoom) then
     begin
-      Writeln(msg[24]);
-      obLoc[52] := 0;
-      obLoc[76] := r;
+      Writeln(messageTable[24]);
+      objectLocation[52] := 0;
+      objectLocation[76] := currentRoom;
       Continue;
     end;
-    if (td = 52) and (obLoc[td] = -1) then
+    if (treasureIndex = 52) and (objectLocation[treasureIndex] = -1) then
     begin
-      Writeln(msg[43]);
-      obLoc[td] := r;
+      Writeln(messageTable[43]);
+      objectLocation[treasureIndex] := currentRoom;
       Continue;
     end;
-    if obLoc[td] = -1 then
+    if objectLocation[treasureIndex] = -1 then
     begin
-      obLoc[td] := r;
-      Writeln('dropped: ', obName[td]);
-      tdPct := 1;
+      objectLocation[treasureIndex] := currentRoom;
+      Writeln('dropped: ', objectName[treasureIndex]);
+      treasurePlaced := 1;
     end;
   end;
-  if tdPct = 0 then Writeln('You have no treasure to drop.');
+  if treasurePlaced = 0 then Writeln('You have no treasure to drop.');
 end;
 
-procedure TryDropItem(obj: Integer);
+procedure DropObject(obj: Integer);
 begin
-  if obLoc[obj] = -1 then
+  if objectLocation[obj] = -1 then
   begin
-    obLoc[obj] := r;
+    objectLocation[obj] := currentRoom;
     Writeln('ok,');
   end
   else
@@ -774,115 +778,115 @@ end;
 
 procedure ShowInventory;
 var
-  i7, osFlag: Integer;
+  itemIndex, carriedFlag: Integer;
 begin
-  osFlag := 0;
+  carriedFlag := 0;
   Writeln('I''M CARRYING:');
-  for i7 := 1 to MaxO do
+  for itemIndex := 1 to MaxObjects do
   begin
-    if obLoc[i7] <> -1 then Continue;
-    osFlag := 1;
-    Writeln(obName[i7], '.  ');
+    if objectLocation[itemIndex] <> -1 then Continue;
+    carriedFlag := 1;
+    Writeln(objectName[itemIndex], '.  ');
   end;
-  if osFlag <> 0 then Writeln;
-  if osFlag = 0 then Writeln('nothing');
+  if carriedFlag <> 0 then Writeln;
+  if carriedFlag = 0 then Writeln('nothing');
 end;
 
-procedure TryMove(dir: Integer);
+procedure AttemptMove(direction: Integer);
 begin
-  if (rmExit[r, dir] = 0) and (df = 0) then
+  if (roomExit[currentRoom, direction] = 0) and (darkFlag = 0) then
   begin
     Writeln('I CAN''T GO IN THAT DIRECTION.');
     Exit;
   end;
-  if (rmExit[r, dir] = 0) and (df = 1) then
+  if (roomExit[currentRoom, direction] = 0) and (darkFlag = 1) then
   begin
     Writeln('I FELL DOWN AND BROKE MY NECK!!');
-    r := lb;
-    so := so - 5;
+    currentRoom := limboRoom;
+    playerScore := playerScore - 5;
     Exit;
   end;
-  if (obLoc[54] = r) and (dir = 1) then
+  if (objectLocation[54] = currentRoom) and (direction = 1) then
   begin
     Writeln('The goblin won''t let me by!');
     Exit;
   end;
-  if (obLoc[55] = r) and (dir = 3) then
+  if (objectLocation[55] = currentRoom) and (direction = 3) then
   begin
     Writeln('The troll is blocking my way!');
     Exit;
   end;
-  r := rmExit[r, dir];
-  rc := 1;
+  currentRoom := roomExit[currentRoom, direction];
+  roomChanged := 1;
 end;
 
-procedure DoScore;
+procedure CalculateScore;
 var
   i: Integer;
 label EndScore;
 begin
-  sc := 0;
-  for i := 1 to MaxO do
+  finalScore := 0;
+  for i := 1 to MaxObjects do
   begin
-    if (Copy(obName[i], Length(obName[i]), 1) = '*') and (obLoc[i] = tr) then
-      sc := sc + tv;
+    if (Copy(objectName[i], Length(objectName[i]), 1) = '*') and (objectLocation[i] = treasureRoom) then
+      finalScore := finalScore + treasureValue;
   end;
-  if qf = 1 then so := so - 4;
-  if so < 0 then so := 0;
-  sc := sc + so;
-  if qf = 1 then goto EndScore;
-  Writeln('YOUR SCORE IS ', sc, ' OUT OF A POSSIBLE ', mxv);
-  if sc - so = 300 then goto EndScore;
+  if quitFlag = 1 then playerScore := playerScore - 4;
+  if playerScore < 0 then playerScore := 0;
+  finalScore := finalScore + playerScore;
+  if quitFlag = 1 then goto EndScore;
+  Writeln('YOUR SCORE IS ', finalScore, ' OUT OF A POSSIBLE ', maxScore);
+  if finalScore - playerScore = 300 then goto EndScore;
   Exit;
 EndScore:
-  Writeln('You scored ', sc, ' points.');
-  Writeln('There were ', mxv, ' points possible.');
-  if sc < 1 then
+  Writeln('You scored ', finalScore, ' points.');
+  Writeln('There were ', maxScore, ' points possible.');
+  if finalScore < 1 then
   begin
     Writeln('You must have nothing but space between youre ears!');
     Halt;
   end;
-  if sc < 51 then
+  if finalScore < 51 then
   begin
     Writeln('You are obviously a rank amateur.');
     Halt;
   end;
-  if sc < 75 then
+  if finalScore < 75 then
   begin
     Writeln('You''re score qualifies you as a novice  class adventurer.');
     Halt;
   end;
-  if sc < 125 then
+  if finalScore < 125 then
   begin
     Writeln('You''ve achieved the rating: Experienced Adventurer');
     Halt;
   end;
-  if sc < 175 then
+  if finalScore < 175 then
   begin
     Writeln('You have reached the ''junior master''    status.');
     Halt;
   end;
-  if sc < 225 then
+  if finalScore < 225 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -D-');
     Halt;
   end;
-  if sc < 295 then
+  if finalScore < 295 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -C-');
     Halt;
   end;
-  if sc < 345 then
+  if finalScore < 345 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -B-');
     Halt;
   end;
-  if sc < 350 then
+  if finalScore < 350 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -A-');
     Halt;
   end;
-  if sc = mxv then
+  if finalScore = maxScore then
   begin
     Writeln('All of adventuredom gives tribute');
     Writeln('to you,  ADVENTURER GRAND MASTER!');
@@ -890,7 +894,7 @@ EndScore:
   end;
 end;
 
-procedure DoSave;
+procedure SaveGame;
 var
   f: TextFile;
   i: Integer;
@@ -899,24 +903,24 @@ begin
   ReadLn;
   Assign(f, 'advent.sav');
   Rewrite(f);
-  Writeln(f, r);
-  Writeln(f, lu);
-  Writeln(f, df);
-  Writeln(f, lf);
-  Writeln(f, so);
-  Writeln(f, gn);
-  Writeln(f, ga);
-  Writeln(f, gf);
-  for i := 1 to MaxO do
-    Writeln(f, obLoc[i]);
+  Writeln(f, currentRoom);
+  Writeln(f, lightUnits);
+  Writeln(f, darkFlag);
+  Writeln(f, lightFlag);
+  Writeln(f, playerScore);
+  Writeln(f, ghostCount);
+  Writeln(f, ghostActive);
+  Writeln(f, ghostFlag);
+  for i := 1 to MaxObjects do
+    Writeln(f, objectLocation[i]);
   Close(f);
   Writeln('Game saved.');
 end;
 
-procedure DoLoad;
+procedure LoadGame;
 var
   f: TextFile;
-  i, tmp: Integer;
+  i, tempValue: Integer;
 begin
   Writeln('hit any key when tape is ready.');
   ReadLn;
@@ -927,193 +931,193 @@ begin
   end;
   Assign(f, 'advent.sav');
   Reset(f);
-  ReadLn(f, r);
-  ReadLn(f, lu);
-  ReadLn(f, df);
-  ReadLn(f, lf);
-  ReadLn(f, so);
-  ReadLn(f, gn);
-  ReadLn(f, ga);
-  ReadLn(f, gf);
-  for i := 1 to MaxO do
+  ReadLn(f, currentRoom);
+  ReadLn(f, lightUnits);
+  ReadLn(f, darkFlag);
+  ReadLn(f, lightFlag);
+  ReadLn(f, playerScore);
+  ReadLn(f, ghostCount);
+  ReadLn(f, ghostActive);
+  ReadLn(f, ghostFlag);
+  for i := 1 to MaxObjects do
   begin
-    ReadLn(f, tmp);
-    obLoc[i] := tmp;
+    ReadLn(f, tempValue);
+    objectLocation[i] := tempValue;
   end;
   Close(f);
   Writeln('Game loaded.');
 end;
 
-procedure ExecuteActions(cmdIdx: Integer);
+procedure ExecuteCommandActions(commandIdx: Integer);
 var
-  g: Integer;
+  actionPos: Integer;
 begin
-  g := 17;
-  while g <= 34 do
+  actionPos := 17;
+  while actionPos <= 34 do
   begin
-    a1 := GetNum(cmd[cmdIdx], g, 2);
-    a2 := GetNum(cmd[cmdIdx], g + 2, 2);
-    a3 := GetNum(cmd[cmdIdx], g + 4, 2);
+    actionType := ExtractNumber(commandTable[commandIdx], actionPos, 2);
+    actionVal1 := ExtractNumber(commandTable[commandIdx], actionPos + 2, 2);
+    actionVal2 := ExtractNumber(commandTable[commandIdx], actionPos + 4, 2);
 
-    if a1 = 1 then
+    if actionType = 1 then
     begin
-      Writeln(msg[a2], '.');
+      Writeln(messageTable[actionVal1], '.');
     end;
 
-    if a1 = 2 then
+    if actionType = 2 then
     begin
-      ob := obLoc[a2];
-      obLoc[a2] := obLoc[a3];
-      obLoc[a3] := ob;
+      tempObjectLoc := objectLocation[actionVal1];
+      objectLocation[actionVal1] := objectLocation[actionVal2];
+      objectLocation[actionVal2] := tempObjectLoc;
     end;
 
-    if a1 = 3 then
+    if actionType = 3 then
     begin
-      obLoc[a2] := 0;
+      objectLocation[actionVal1] := 0;
     end;
 
-    if a1 = 4 then
+    if actionType = 4 then
     begin
-      obLoc[a2] := r;
+      objectLocation[actionVal1] := currentRoom;
     end;
 
-    if a1 = 5 then
+    if actionType = 5 then
     begin
-      r := a2;
-      rc := 1;
+      currentRoom := actionVal1;
+      roomChanged := 1;
     end;
 
-    if a1 = 6 then
+    if actionType = 6 then
     begin
-      dh := 1;
-      r := lb;
-      so := so - 5;
+      deathHappened := 1;
+      currentRoom := limboRoom;
+      playerScore := playerScore - 5;
     end;
 
-    if a1 = 7 then
+    if actionType = 7 then
     begin
-      TryTake(i2);
+      TakeObject(nounIndex);
     end;
 
-    if a1 = 8 then
+    if actionType = 8 then
     begin
-      if n1s <> 'TRE' then
+      if nounPrefix <> 'TRE' then
       begin
-        if i2s = '' then Writeln('be specific')
+        if word2 = '' then Writeln('be specific')
         else
-          TryDropItem(i2);
+          DropObject(nounIndex);
       end
       else
-        TryDropTreasure;
+        DropTreasure;
     end;
 
-    if a1 = 9 then
+    if actionType = 9 then
     begin
-      obLoc[a2] := a3;
+      objectLocation[actionVal1] := actionVal2;
     end;
 
-    if a1 = 10 then
+    if actionType = 10 then
     begin
       ShowInventory;
     end;
 
-    if a1 = 77 then
+    if actionType = 77 then
     begin
-      dh := 1;
+      deathHappened := 1;
     end;
 
-    if a1 = 18 then
+    if actionType = 18 then
     begin
-      DoGhostAttack;
+      AttackGhost;
     end;
 
-    if a1 = 11 then
+    if actionType = 11 then
     begin
-      rc := 1;
+      roomChanged := 1;
     end;
 
-    if a1 = 12 then
+    if actionType = 12 then
     begin
-      DoScore;
+      CalculateScore;
     end;
 
-    if a1 = 13 then
+    if actionType = 13 then
     begin
-      qf := 1;
-      DoScore;
+      quitFlag := 1;
+      CalculateScore;
     end;
 
-    if a1 = 14 then
+    if actionType = 14 then
     begin
-      h := a2;
-      af := 1;
-      if obLoc[h] = -1 then Writeln(msg[h])
+      readObject := actionVal1;
+      itemActionFlag := 1;
+      if objectLocation[readObject] = -1 then Writeln(messageTable[readObject])
       else Writeln('I have nothing to read');
     end;
 
-    if a1 = 15 then
+    if actionType = 15 then
     begin
-      e := a2;
-      af := 1;
-      if obLoc[e] = -1 then Writeln('thanks I was hungery')
+      eatObject := actionVal1;
+      itemActionFlag := 1;
+      if objectLocation[eatObject] = -1 then Writeln('thanks I was hungery')
       else Writeln('I have nothing to eat');
     end;
 
-    if a1 = 16 then
+    if actionType = 16 then
     begin
-      DoSave;
+      SaveGame;
     end;
 
-    g := g + 6;
+    actionPos := actionPos + 6;
   end;
 end;
 
-procedure MatchCommand;
+procedure FindCommand;
 var
-  y, z: Integer;
-  c1, c2: Integer;
-label NextCmd, ExecuteIt;
+  commandIndex, conditionPos: Integer;
+  condType, condValue: Integer;
+label NextCommand, ExecuteIt;
 begin
-  mf := 0;
-  k := 0;
-  jp := 1;
-  c7 := 53;
-  if i1 > 17 then
+  matchFound := 0;
+  conditionCount := 0;
+  commandStart := 1;
+  commandEnd := 53;
+  if verbIndex > 17 then
   begin
-    jp := 54;
-    c7 := MaxC;
+    commandStart := 54;
+    commandEnd := MaxCommands;
   end;
-  for y := jp to c7 do
+  for commandIndex := commandStart to commandEnd do
   begin
-    if GetNum(cmd[y], 1, 2) <> i1 then Continue;
-    if GetNum(cmd[y], 3, 2) <> 0 then
-      if GetNum(cmd[y], 3, 2) <> i2 then Continue;
-    k := 0;
-    mf := 1;
-    z := 5;
-    while z <= 16 do
+    if ExtractNumber(commandTable[commandIndex], 1, 2) <> verbIndex then Continue;
+    if ExtractNumber(commandTable[commandIndex], 3, 2) <> 0 then
+      if ExtractNumber(commandTable[commandIndex], 3, 2) <> nounIndex then Continue;
+    conditionCount := 0;
+    matchFound := 1;
+    conditionPos := 5;
+    while conditionPos <= 16 do
     begin
-      c1 := GetNum(cmd[y], z, 2);
-      c2 := GetNum(cmd[y], z + 2, 2);
-      if c1 = 1 then
-        if obLoc[c2] <> -1 then goto NextCmd;
-      if c1 = 2 then
-        if r <> c2 then goto NextCmd;
-      if c1 = 3 then
-        if obLoc[c2] <> 0 then goto NextCmd;
-      if c1 = 5 then
-        if obLoc[c2] <> r then goto NextCmd;
-      k := k + 1;
-      if k = 3 then
+      condType := ExtractNumber(commandTable[commandIndex], conditionPos, 2);
+      condValue := ExtractNumber(commandTable[commandIndex], conditionPos + 2, 2);
+      if condType = 1 then
+        if objectLocation[condValue] <> -1 then goto NextCommand;
+      if condType = 2 then
+        if currentRoom <> condValue then goto NextCommand;
+      if condType = 3 then
+        if objectLocation[condValue] <> 0 then goto NextCommand;
+      if condType = 5 then
+        if objectLocation[condValue] <> currentRoom then goto NextCommand;
+      conditionCount := conditionCount + 1;
+      if conditionCount = 3 then
       begin
-        an := y;
+        matchedCommand := commandIndex;
         goto ExecuteIt;
       end;
-      z := z + 4;
+      conditionPos := conditionPos + 4;
     end;
-NextCmd:
+NextCommand:
   end;
-  if mf = 1 then
+  if matchFound = 1 then
   begin
     Writeln('I CAN''T DO THAT NOW.');
     Exit;
@@ -1121,190 +1125,189 @@ NextCmd:
   Writeln('I DON''T UNDERSTAND?');
   Exit;
 ExecuteIt:
-  af := 0;
-  dh := 0;
-  rf := 0;
-  rc := 0;
-  ExecuteActions(an);
-  if dh = 1 then
+  itemActionFlag := 0;
+  deathHappened := 0;
+  roomFlag := 0;
+  roomChanged := 0;
+  ExecuteCommandActions(matchedCommand);
+  if deathHappened = 1 then
   begin
     Writeln;
     Exit;
   end;
-  if rc = 1 then
+  if roomChanged = 1 then
   begin
     Exit;
   end;
 end;
 
-function FindObject(const aKey: String): Integer;
+function LocateObjectByKeyword(const aKey: String): Integer;
 var
   i: Integer;
 begin
-  for i := 1 to MaxO do
-    if UpperCase(obKey[i]) = UpperCase(aKey) then
+  for i := 1 to MaxObjects do
+    if UpperCase(objectKeyword[i]) = UpperCase(aKey) then
     begin
-      FindObject := i;
+      LocateObjectByKeyword := i;
       Exit;
     end;
-  FindObject := 0;
+  LocateObjectByKeyword := 0;
 end;
 
-procedure ParseInput;
+procedure ProcessInput;
 var
-  spPos: Integer;
-  w3, vl, nl: Integer;
+  spacePos: Integer;
+  synonymLoop, verbLoop, nounLoop: Integer;
 begin
-  if i1s = 'GO' then
+  if word1 = 'GO' then
   begin
-    i1s := i2s;
-    i2s := '';
+    word1 := word2;
+    word2 := '';
   end;
-  if i1s = 'SAY' then
+  if word1 = 'SAY' then
   begin
-    i1s := i2s;
-    i2s := '';
+    word1 := word2;
+    word2 := '';
   end;
-  v1s := Copy(i1s, 1, 3);
-  n1s := Copy(i2s, 1, 3);
-  i1 := 0;
-  i2 := 0;
-  if (v1s = 'FEE') and (n1s = 'OYS') then n1s := 'DOO';
-  for w3 := 1 to w0 do
-    if v1s = UpperCase(w1[w3]) then v1s := UpperCase(w2[w3]);
-  if (n1s = 'HOU') or (n1s = 'TRA') then n1s := 'DOO';
-  for vl := 1 to MaxV do
-    if v1s = UpperCase(verb[vl]) then
+  verbPrefix := Copy(word1, 1, 3);
+  nounPrefix := Copy(word2, 1, 3);
+  verbIndex := 0;
+  nounIndex := 0;
+  if (verbPrefix = 'FEE') and (nounPrefix = 'OYS') then nounPrefix := 'DOO';
+  for synonymLoop := 1 to synonymCount do
+    if verbPrefix = UpperCase(synonymShort[synonymLoop]) then verbPrefix := UpperCase(synonymLong[synonymLoop]);
+  if (nounPrefix = 'HOU') or (nounPrefix = 'TRA') then nounPrefix := 'DOO';
+  for verbLoop := 1 to MaxVerbs do
+    if verbPrefix = UpperCase(verbTable[verbLoop]) then
     begin
-      i1 := vl;
+      verbIndex := verbLoop;
       Break;
     end;
-  if i2s <> '' then
+  if word2 <> '' then
   begin
-    for nl := 1 to MaxN do
-      if n1s = UpperCase(noun[nl]) then
+    for nounLoop := 1 to MaxNouns do
+      if nounPrefix = UpperCase(nounTable[nounLoop]) then
       begin
-        i2 := nl;
+        nounIndex := nounLoop;
         Break;
       end;
   end;
-  if i1 = 0 then
+  if verbIndex = 0 then
   begin
     Writeln('YOU USE WORD(S) I DON''T KNOW');
     Exit;
   end;
-  if i1 < 7 then
+  if verbIndex < 7 then
   begin
-    TryMove(i1 - 1);
+    AttemptMove(verbIndex - 1);
     Exit;
   end;
-  if i1 = 7 then
+  if verbIndex = 7 then
   begin
-    TryTake(FindObject(n1s));
+    TakeObject(LocateObjectByKeyword(nounPrefix));
     Exit;
   end;
-  MatchCommand;
+  FindCommand;
 end;
 
-procedure DescribeRoom;
+procedure ShowRoomDescription;
 var
-  x, uf, oe, vi: Integer;
-label
-  ShowDesc;
+  printHeader, itemsFound, exitIndex, itemIndex: Integer;
+label ShowDescription;
 begin
-  df := 0;
-  if (r > dt) and (obLoc[lt] <> -1) and (obLoc[lt] <> r) then df := 1;
-  if (r = lb) or (r = dt) then df := 0;
-  if df = 0 then goto ShowDesc;
+  darkFlag := 0;
+  if (currentRoom > deathRoom) and (objectLocation[lightObject] <> -1) and (objectLocation[lightObject] <> currentRoom) then darkFlag := 1;
+  if (currentRoom = limboRoom) or (currentRoom = deathRoom) then darkFlag := 0;
+  if darkFlag = 0 then goto ShowDescription;
   Writeln('I CAN''T SEE IN THE DARK!');
   Writeln;
   Exit;
-ShowDesc:
-  if Copy(rmName[r], 1, 1) = '*' then
-    rmName[r] := Copy(rmName[r], 2, Length(rmName[r]) - 1);
-  Writeln('You''re in ', rmName[r], '.');
-  if r = dt then
+ShowDescription:
+  if Copy(roomName[currentRoom], 1, 1) = '*' then
+    roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
+  Writeln('You''re in ', roomName[currentRoom], '.');
+  if currentRoom = deathRoom then
   begin
     Writeln;
-    so := so - 12;
-    qf := 1;
+    playerScore := playerScore - 12;
+    quitFlag := 1;
     Exit;
   end;
-  x := 1;
-  uf := 0;
+  printHeader := 1;
+  itemsFound := 0;
   Writeln;
-  for vi := 1 to MaxO do
+  for itemIndex := 1 to MaxObjects do
   begin
-    if (obLoc[vi] = r) and (x = 1) then
+    if (objectLocation[itemIndex] = currentRoom) and (printHeader = 1) then
     begin
       Writeln('VISIBLE ITEMS HERE:');
-      x := 0;
-      uf := 1;
+      printHeader := 0;
+      itemsFound := 1;
     end;
-    if obLoc[vi] <> r then Continue;
-    Writeln(obName[vi], '.  ');
+    if objectLocation[itemIndex] <> currentRoom then Continue;
+    Writeln(objectName[itemIndex], '.  ');
   end;
-  if uf <> 0 then Writeln;
-  x := 1;
+  if itemsFound <> 0 then Writeln;
+  printHeader := 1;
   Writeln;
-  for oe := 0 to 5 do
+  for exitIndex := 0 to 5 do
   begin
-    if (rmExit[r, oe] <> 0) and (x = 1) then
+    if (roomExit[currentRoom, exitIndex] <> 0) and (printHeader = 1) then
     begin
       Writeln('OBVIOUS EXITS:');
-      x := 0;
+      printHeader := 0;
     end;
-    if rmExit[r, oe] <> 0 then Write(verb[oe + 1], ' ');
+    if roomExit[currentRoom, exitIndex] <> 0 then Write(verbTable[exitIndex + 1], ' ');
   end;
   Writeln;
   Writeln;
 end;
 
-procedure MainLoop;
+procedure GameTurn;
 var
-  cmdInput: String;
-  spPos: Integer;
+  userInput: String;
+  spacePos: Integer;
 begin
-  if obLoc[lt] = -1 then lu := lu - 1;
-  ht := ht + 1;
-  DoLightCheck;
-  DoRandomEvents;
-  DoRoomFlavor;
-  if gk = 1 then
+  if objectLocation[lightObject] = -1 then lightUnits := lightUnits - 1;
+  turnCount := turnCount + 1;
+  CheckLight;
+  ProcessRandomEvents;
+  DescribeRoomEvents;
+  if gameKilled = 1 then
   begin
-    gk := 0;
-    so := so - 5;
+    gameKilled := 0;
+    playerScore := playerScore - 5;
     Exit;
   end;
   Writeln;
   Write('WHAT NEXT   ');
-  ReadLn(cmdInput);
-  ip := cmdInput;
-  if ip = '' then Exit;
+  ReadLn(userInput);
+  rawInput := userInput;
+  if rawInput = '' then Exit;
   Writeln;
-  i1s := '';
-  i2s := '';
-  spPos := Pos(' ', ip);
-  if spPos > 0 then
+  word1 := '';
+  word2 := '';
+  spacePos := Pos(' ', rawInput);
+  if spacePos > 0 then
   begin
-    i1s := Copy(ip, 1, spPos - 1);
-    i2s := Copy(ip, spPos + 1, Length(ip) - spPos);
+    word1 := Copy(rawInput, 1, spacePos - 1);
+    word2 := Copy(rawInput, spacePos + 1, Length(rawInput) - spacePos);
   end
   else
-    i1s := ip;
-  i1s := UpperCase(i1s);
-  i2s := UpperCase(i2s);
-  ParseInput;
+    word1 := rawInput;
+  word1 := UpperCase(word1);
+  word2 := UpperCase(word2);
+  ProcessInput;
 end;
 
-procedure ShowIntro;
+procedure ShowInstructions;
 begin
   Writeln;
   Writeln('This is adventure!!!');
   Writeln('I will be your eyes and hands as you');
   Writeln('search for lost treasure.');
   Writeln;
-  Writeln('The object is to recover ', t7, ' treasures');
+  Writeln('The object is to recover ', treasureCount, ' treasures');
   Writeln('and return them to the proper place.');
   Writeln('Treasures have a ''*'' in their name');
   Writeln;
@@ -1332,7 +1335,7 @@ begin
   Writeln('Please wait while I load my data...');
 end;
 
-procedure ShowTitle;
+procedure ShowTitleScreen;
 begin
   ClrScr;
   Writeln('                adventure  ');
@@ -1362,43 +1365,43 @@ begin
   ReadKey;
 end;
 
-procedure InitializeGame;
+procedure SetupGame;
 begin
   Randomize;
-  lt := 15;
-  tv := 15;
-  t7 := 20;
-  mxv := tv * t7 + 50;
-  ol := 10;
-  tr := 7;
-  lb := 57;
-  dt := 58;
-  ad := 3;
-  lu := 150;
-  lf := 2;
-  gn := 4;
-  so := 50;
-  ht := 0;
-  ha := 0;
-  gf := 0;
-  ga := 0;
-  r := 1;
-  df := 0;
-  qf := 0;
-  gk := 0;
-  jp := 1;
+  lightObject := 15;
+  treasureValue := 15;
+  treasureCount := 20;
+  maxScore := treasureValue * treasureCount + 50;
+  objectLimit := 10;
+  treasureRoom := 7;
+  limboRoom := 57;
+  deathRoom := 58;
+  adventureNumber := 3;
+  lightUnits := 150;
+  lightFlag := 2;
+  ghostCount := 4;
+  playerScore := 50;
+  turnCount := 0;
+  hubieActive := 0;
+  ghostFlag := 0;
+  ghostActive := 0;
+  currentRoom := 1;
+  darkFlag := 0;
+  quitFlag := 0;
+  gameKilled := 0;
+  commandStart := 1;
 end;
 
-procedure LoadOrStart;
+procedure PromptLoadGame;
 var
-  g: String;
+  answer: String;
 begin
   Writeln;
   Write('use saved game   n ');
-  ReadLn(g);
-  if g <> 'n' then
+  ReadLn(answer);
+  if answer <> 'n' then
   begin
-    DoLoad;
+    LoadGame;
   end;
 end;
 
@@ -1412,47 +1415,47 @@ begin
   InitSynonyms;
   InitEvents;
 
-  ShowTitle;
-  ShowIntro;
-  PauseAnyKey;
+  ShowTitleScreen;
+  ShowInstructions;
+  WaitForKey;
 
-  InitializeGame;
-  LoadOrStart;
+  SetupGame;
+  PromptLoadGame;
 
   Writeln('What time is it (HHMM)');
-  ReadLn(tm);
-  if Length(tm) <> 4 then
+  ReadLn(timeString);
+  if Length(timeString) <> 4 then
   begin
     Writeln('illegal time');
-    tm := '1200';
+    timeString := '1200';
   end;
 
   while True do
   begin
-    if r = dt then
+    if currentRoom = deathRoom then
     begin
-      DoScore;
+      CalculateScore;
       Break;
     end;
-    DescribeRoom;
-    if qf = 1 then Break;
-    if r = lb then
+    ShowRoomDescription;
+    if quitFlag = 1 then Break;
+    if currentRoom = limboRoom then
     begin
-      r := 1;
-      so := so - 5;
+      currentRoom := 1;
+      playerScore := playerScore - 5;
     end;
-    MainLoop;
-    if dh = 1 then
+    GameTurn;
+    if deathHappened = 1 then
     begin
-      dh := 0;
-      r := lb;
-      so := so - 5;
-      gk := 1;
+      deathHappened := 0;
+      currentRoom := limboRoom;
+      playerScore := playerScore - 5;
+      gameKilled := 1;
       Continue;
     end;
-    if rc = 1 then
+    if roomChanged = 1 then
     begin
-      rc := 0;
+      roomChanged := 0;
       Continue;
     end;
   end;
