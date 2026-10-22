@@ -36,17 +36,17 @@ var
   objectKeyword : array[0..MaxObjects] of String;   // 3-letter lookup key
   roomName: array[0..MaxRooms] of String;           // room descriptions
   roomExit: array[0..MaxRooms, 0..5] of Integer;    // N,S,E,W,U,D exits
-  nounTable  : array[0..MaxNouns] of String;        // noun dictionary
-  verbTable  : array[0..MaxVerbs] of String;        // verb dictionary
-  messageTable   : array[0..MaxMessages] of String; // system messages
-  commandTable   : array[1..MaxCommands] of String; // encoded command records
-  synonymShort   : array[1..20] of String;          // short synonym (input side)
-  synonymLong    : array[1..20] of String;          // long synonym (internal side)
-  synonymCount   : Integer;
-  endCommand     : String;
-  eventMessage   : array[1..7] of String;   // random flavor messages
-  hubieMessage   : array[1..3] of String;   // Hubie Marsten spirit messages
-  endString      : String;
+  nounTable : array[0..MaxNouns] of String;        // noun dictionary
+  verbTable : array[0..MaxVerbs] of String;        // verb dictionary
+  messageTable : array[0..MaxMessages] of String; // system messages
+  commandTable : array[1..MaxCommands] of String; // encoded command records
+  synonymShort : array[1..20] of String;          // short synonym (input side)
+  synonymLong : array[1..20] of String;          // long synonym (internal side)
+  synonymCount : Integer;
+  endCommand : String;
+  eventMessage : array[1..7] of String;   // random flavor messages
+  hubieMessage : array[1..3] of String;   // Hubie Marsten spirit messages
+  endString : String;
 
   rawInput, word1, word2, verbPrefix, nounPrefix, timeString: String;
 
@@ -367,7 +367,7 @@ begin
   objectName[71] := 'cobwebs'; objectKeyword[71] := 'cob'; objectSize[71] := 1; objectLocation[71] := 8;
   objectName[72] := 'SIGN SAYS - YOU SHALL DIE....'; objectKeyword[72] := 'sig'; objectSize[72] := 1; objectLocation[72] := 5;
   objectName[73] := '-Barlow the Vampire-'; objectKeyword[73] := 'vam'; objectSize[73] := 2; objectLocation[73] := 0;
-  objectName[74] := 'The spirit of Hubie Marston'; objectKeyword[74] := 'spi'; objectSize[74] := 1; objectLocation[74] := 0;
+  objectName[74] := 'The spirit of Hubie Marsten'; objectKeyword[74] := 'spi'; objectSize[74] := 1; objectLocation[74] := 0;
   objectName[75] := 'empty vial'; objectKeyword[75] := 'via'; objectSize[75] := 0; objectLocation[75] := 0;
   objectName[76] := 'sweet smelling broken glass'; objectKeyword[76] := 'gla'; objectSize[76] := 0; objectLocation[76] := 0;
   objectName[77] := 'PASSAGE'; objectKeyword[77] := 'pas'; objectSize[77] := 1; objectLocation[77] := 0;
@@ -383,15 +383,15 @@ begin
   messageTable[5] := 'something fell out';
   messageTable[6] := 'the trapdoor creaks open';
   messageTable[7] := 'the door creaks open';
-  messageTable[8] := 'It says: those who enter may not leave  here''s a hint they may need';
-  messageTable[9] := 'If something is too heavy to take, try   to move it';
+  messageTable[8] := 'It says: those who enter may not leave here''s a hint they may need';
+  messageTable[9] := 'If something is too heavy to take, try to move it';
   messageTable[10] := 'OK, I moved it';
   messageTable[11] := 'OK, weird laughing comes from the house';
-  messageTable[12] := 'the troll drinks the potion and turns   into a frog, the frog hops away';
+  messageTable[12] := 'the troll drinks the potion and turns into a frog, the frog hops away';
   messageTable[13] := 'you got him.  The goblin and disappears in a cloud of black smoke';
-  messageTable[14] := 'Barlow turns to dust                    and blows away';
+  messageTable[14] := 'Barlow turns to dust and blows away';
   messageTable[15] := 'The ghost vaporizes';
-  messageTable[16] := 'It''s poison  I''m dead!';
+  messageTable[16] := 'It''s poison.  I''m dead!';
   messageTable[17] := 'Everything changes and....';
   messageTable[18] := 'BANG BANG BANG';
   messageTable[19] := 'you got him';
@@ -417,10 +417,10 @@ begin
   messageTable[39] := 'It''s locked';
   messageTable[40] := 'It''s to heavy';
   messageTable[41] := 'I need a key';
-  messageTable[42] := 'The oyster opens up to eat the BIG MAC  and a pearl rolls out!';
+  messageTable[42] := 'The oyster opens up to eat the BIG MAC and a pearl rolls out!';
   messageTable[43] := 'The bottle lands softly on the pillow';
   messageTable[44] := 'A voice booms out.....PLEASE LEAVE IT ALONE!';
-  messageTable[45] := 'The lid of the Coffin rises and Barlow  the vampire jumps out!!!';
+  messageTable[45] := 'The lid of the Coffin rises and Barlow the vampire jumps out!!!';
   messageTable[46] := 'I don''t see it here';
   messageTable[47] := 'HOW?!?';
   messageTable[48] := 'I have nothing to read';
@@ -433,7 +433,7 @@ begin
   messageTable[55] := 'Barlow stops me!';
   messageTable[56] := 'There is nothing to attack here';
   messageTable[57] := 'The bullets bounce off the shell!';
-  messageTable[58] := 'He only eats big macs and I don''t       have one';
+  messageTable[58] := 'He only eats big macs and I don''t have one';
   messageTable[59] := 'hic hic, burp.  Boy was that good!';
 end;
 
@@ -579,13 +579,13 @@ procedure CheckLight;
 begin
   if (lightUnits < 50) and (lightFlag = 2) and (objectLocation[lightObject] <> 0) then
   begin
-    Writeln('You''re flashlight is getting dim!');
+    Writeln('Your flashlight is getting dim!');
     lightFlag := 1;
   end;
 
   if (lightUnits < 38) and (lightFlag = 1) and (objectLocation[lightObject] <> 0) then
   begin
-    Writeln('You''re flashlight is getting dimmer!!');
+    Writeln('Your flashlight is getting dimmer!!');
     lightFlag := 0;
   end;
 
@@ -619,7 +619,7 @@ begin
   if ghostActive = 1 then
   begin
     objectLocation[61] := currentRoom;
-    Writeln('There is a threatening little ghost in  the room with you!');
+    Writeln('There is a threatening little ghost in the room with you!');
     ghostFlag := 1 - ghostFlag;
     if ghostFlag <> 0 then Exit;
     Writeln('The ghost attacks!');
@@ -664,7 +664,7 @@ procedure DescribeRoomEvents;
 {Ambient messages, Hubie spirit, and monster attacks each turn.}
 begin
   if currentRoom = 27 then
-    Writeln('A clock shows the time: ', Copy(timeString, 1, 2), ':', Copy(timeString, 3, 2));
+    Writeln('A clock shows the time: ', timeString);
 
   if hubieActive = 1 then
   begin
@@ -915,7 +915,7 @@ begin
 
   if finalScore < 75 then
   begin
-    Writeln('You''re score qualifies you as a novice  class adventurer.');
+    Writeln('You''re score qualifies you as a novice class adventurer.');
     Halt;
   end;
 
@@ -927,7 +927,7 @@ begin
 
   if finalScore < 175 then
   begin
-    Writeln('You have reached the ''junior master''    status.');
+    Writeln('You have reached the ''junior master'' status.');
     Halt;
   end;
 
@@ -958,7 +958,7 @@ begin
   if finalScore = maxScore then
   begin
     Writeln('All of adventuredom gives tribute');
-    Writeln('to you,  ADVENTURER GRAND MASTER!');
+    Writeln('to you, ADVENTURER GRAND MASTER!');
     Halt;
   end;
 end;
@@ -968,8 +968,6 @@ var
   f: TextFile;
   i: Integer;
 begin
-  Writeln('hit any key when tape is ready.');
-  ReadLn;
   Assign(f, 'advent.sav');
   Rewrite(f);
   Writeln(f, currentRoom);
@@ -991,8 +989,6 @@ var
   f: TextFile;
   i, tempValue: Integer;
 begin
-  Writeln('hit any key when tape is ready.');
-  ReadLn;
   if not FileExists('advent.sav') then
   begin
     Writeln('No saved game found.');
@@ -1453,6 +1449,7 @@ begin
   Writeln('hit any key to continue');
 
   ReadKey;
+  ClrScr;
 
   Writeln('       Words to Know                 ');
   Writeln('READ - if you have something that can be       read you will read it.');
@@ -1552,10 +1549,10 @@ var
 begin
   Writeln;
 
-  Write('use saved game   n ');
+  Write('Use saved game (y/n)? ');
   ReadLn(answer);
 
-  if answer <> 'n' then
+  if LowerCase(answer) = 'y' then
   begin
     LoadGame;
   end;
@@ -1589,14 +1586,7 @@ begin
 
   PromptLoadGame;
 
-  Writeln('What time is it (HHMM)');
-  ReadLn(timeString);
-
-  if Length(timeString) <> 4 then
-  begin
-    Writeln('illegal time');
-    timeString := '1200';
-  end;
+  timeString := FormatDateTime('hh:nn am/pm', Now);
 
   ClrScr;                       // clear after entering time
 
