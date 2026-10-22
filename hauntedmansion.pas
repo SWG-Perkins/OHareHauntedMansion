@@ -1309,9 +1309,12 @@ begin
   if darkFlag = 0 then
   begin
     if Copy(roomName[currentRoom], 1, 1) = '*' then
+    begin
       roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
-
-    Writeln('You''re in ', roomName[currentRoom], '.');
+      Writeln(roomName[currentRoom], '.');
+    end
+    else
+      Writeln('You''re in ', roomName[currentRoom], '.');
 
     if currentRoom = deathRoom then
     begin
