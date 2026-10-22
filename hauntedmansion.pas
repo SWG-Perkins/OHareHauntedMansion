@@ -5,47 +5,55 @@ program OHARES3;
 uses
   SysUtils, StrUtils, Crt;
 
+{------------------------------------------------------------------------------
+  OHARES3 - Free Pascal conversion of John O'Hare's "Adventure 1.5" (1980)
+  Commodore BASIC -> Free Pascal console application.
+------------------------------------------------------------------------------}
+
 const
-  MaxNouns = 36;
-  MaxVerbs = 32;
-  MaxRooms = 58;
-  MaxObjects = 78;
-  MaxMessages = 59;
-  MaxCommands = 91;
+  MaxNouns = 36;   // size of noun dictionary
+  MaxVerbs = 32;   // size of verb dictionary
+  MaxRooms = 58;   // total rooms (0..58)
+  MaxObjects = 78; // total objects (0..78)
+  MaxMessages = 59;// system messages (1..59)
+  MaxCommands = 91;// command/action table entries
 
+{------------------------------------------------------------------------------
+  GAME STATE (globals)
+------------------------------------------------------------------------------}
 var
-  lightUnits, lightFlag, lightObject, treasureValue, treasureCount, maxScore,
-  objectLimit, treasureRoom, currentRoom, limboRoom, deathRoom, adventureNumber,
-  darkFlag, playerScore, ghostCount, ghostActive, ghostFlag, turnCount,
-  hubieActive, commandStart, commandEnd, verbIndex, nounIndex, matchFound,
-  conditionCount, matchedCommand, printHeader, itemsFound, exitIndex,
-  itemActionFlag, deathHappened, roomFlag, roomChanged, readObject, eatObject,
-  quitFlag, finalScore, spacePosition, gameKilled: Integer;
+  lightUnits, lightFlag, lightObject, treasureValue, treasureCount, maxScore: Integer;
+  objectLimit, treasureRoom, currentRoom, limboRoom, deathRoom, adventureNumber: Integer;
+  darkFlag, playerScore, ghostCount, ghostActive, ghostFlag, turnCount, hubieActive: Integer;
+  verbIndex, nounIndex: Integer;               // parser results
+  matchFound, matchedCommand, roomChanged, deathHappened, quitFlag, gameKilled: Integer;
 
-  objectLocation : array[0..MaxObjects] of Integer;
-  objectSize: array[0..MaxObjects] of Integer;
-  objectName: array[0..MaxObjects] of String;
-  objectKeyword : array[0..MaxObjects] of String;
-  roomName: array[0..MaxRooms] of String;
-  roomExit: array[0..MaxRooms, 0..5] of Integer;
-  nounTable  : array[0..MaxNouns] of String;
-  verbTable  : array[0..MaxVerbs] of String;
-  messageTable   : array[0..MaxMessages] of String;
-  commandTable   : array[1..MaxCommands] of String;
-  synonymShort   : array[1..20] of String;
-  synonymLong    : array[1..20] of String;
+  objectLocation : array[0..MaxObjects] of Integer; // -1=carried, 0=limbo, else room#
+  objectSize: array[0..MaxObjects] of Integer;      // weight / carry flag
+  objectName: array[0..MaxObjects] of String;       // full description
+  objectKeyword : array[0..MaxObjects] of String;   // 3-letter lookup key
+  roomName: array[0..MaxRooms] of String;           // room descriptions
+  roomExit: array[0..MaxRooms, 0..5] of Integer;    // N,S,E,W,U,D exits
+  nounTable  : array[0..MaxNouns] of String;        // noun dictionary
+  verbTable  : array[0..MaxVerbs] of String;        // verb dictionary
+  messageTable   : array[0..MaxMessages] of String; // system messages
+  commandTable   : array[1..MaxCommands] of String; // encoded command records
+  synonymShort   : array[1..20] of String;          // short synonym (input side)
+  synonymLong    : array[1..20] of String;          // long synonym (internal side)
   synonymCount   : Integer;
   endCommand     : String;
-  eventMessage   : array[1..7] of String;
-  hubieMessage   : array[1..3] of String;
+  eventMessage   : array[1..7] of String;   // random flavor messages
+  hubieMessage   : array[1..3] of String;   // Hubie Marsten spirit messages
   endString      : String;
 
   rawInput, word1, word2, verbPrefix, nounPrefix, timeString: String;
-  itemIndex, carryIndex, carriedCount, treasureIndex, synonymLoop,
-  verbLoop, nounLoop, commandIndex, conditionPos, actionPos, tempObjectLoc,
-  condType, condValue, actionType, actionVal1, actionVal2: Integer;
+
+{------------------------------------------------------------------------------
+  UTILITIES
+------------------------------------------------------------------------------}
 
 function ExtractNumber(const s: String; start, len: Integer): Integer;
+{Convert a 2-character substring to integer; returns 0 on failure.}
 var
   code, value: Integer;
   sub: String;
@@ -57,6 +65,7 @@ begin
 end;
 
 function RandomRange(x: Integer): Integer;
+{Return random integer in 1..x.}
 begin
   if x <= 0 then Exit(0);
   Result := Random(x) + 1;
@@ -70,6 +79,10 @@ begin
   ch := ReadKey;
   Writeln;
 end;
+
+{------------------------------------------------------------------------------
+  DATA INITIALISATION
+------------------------------------------------------------------------------}
 
 procedure InitNouns;
 begin
@@ -267,14 +280,15 @@ begin
   roomName[56] := 'a dead end passage';
   roomExit[56,0] := 0; roomExit[56,1] := 0; roomExit[56,2] := 47; roomExit[56,3] := 0; roomExit[56,4] := 0; roomExit[56,5] := 0;
 
-  roomName[57] := ' a misty room with strange    looking exits';
+  roomName[57] := ' a misty room with strange    looking exits'; // LIMBO
   roomExit[57,0] := 1; roomExit[57,1] := 58; roomExit[57,2] := 58; roomExit[57,3] := 58; roomExit[57,4] := 5; roomExit[57,5] := 58;
 
-  roomName[58] := ' H E L L ';
+  roomName[58] := ' H E L L '; // DEATH
   roomExit[58,0] := 0; roomExit[58,1] := 0; roomExit[58,2] := 0; roomExit[58,3] := 0; roomExit[58,4] := 0; roomExit[58,5] := 0;
 end;
 
 procedure InitObjects;
+{Initialize object table.  ob% (3rd BASIC value) = starting room; ob (4th) = size.}
 begin
   objectName[0] := ''; objectKeyword[0] := ''; objectSize[0] := 0; objectLocation[0] := 0;
 
@@ -520,6 +534,8 @@ begin
 end;
 
 procedure InitSynonyms;
+{Map short player input to 3-letter internal codes.  'use' was mapped to
+'shoot' in the original; removed so "use key" does not trigger combat.}
 begin
   synonymCount := 13;
   synonymShort[1] := 'n';  synonymLong[1] := 'nor';
@@ -529,7 +545,6 @@ begin
   synonymShort[5] := 'u';  synonymLong[5] := 'up';
   synonymShort[6] := 'd';  synonymLong[6] := 'dow';
   synonymShort[7] := 'get'; synonymLong[7] := 'tak';
-  // synonymShort[8] := 'use'; synonymLong[8] := 'sho';  // removed: 'use' was mapped to 'shoot'
   synonymShort[9] := 'sea'; synonymLong[9] := 'ope';
   synonymShort[10] := 'att'; synonymLong[10] := 'kil';
   synonymShort[11] := 'fir'; synonymLong[11] := 'sho';
@@ -553,7 +568,12 @@ begin
   endString := 'the end';
 end;
 
+{------------------------------------------------------------------------------
+  GAME LOGIC
+------------------------------------------------------------------------------}
+
 procedure CheckLight;
+{Manage flashlight battery and darkness.}
 begin
   if (lightUnits < 50) and (lightFlag = 2) and (objectLocation[lightObject] <> 0) then
   begin
@@ -579,7 +599,9 @@ begin
 end;
 
 procedure ProcessRandomEvents;
-label L4030, L3999;
+label
+  L4030, L3999;
+{Random monster / ghost encounters based on turn count and room.}
 begin
   if (objectLocation[54] = currentRoom) or (objectLocation[55] = currentRoom) or (objectLocation[73] = currentRoom) or (objectLocation[74] = currentRoom) then
   begin
@@ -618,6 +640,7 @@ L3999:
 end;
 
 procedure AttackGhost;
+{Player attacks ghost; success removes it from game.}
 begin
   if RandomRange(5) > 2 then
   begin
@@ -633,6 +656,7 @@ begin
 end;
 
 procedure DescribeRoomEvents;
+{Ambient messages, Hubie spirit, and monster attacks each turn.}
 begin
   if currentRoom = 27 then
     Writeln('A clock shows the time: ', Copy(timeString, 1, 2), ':', Copy(timeString, 3, 2));
@@ -699,6 +723,7 @@ begin
 end;
 
 procedure TakeObject(obj: Integer);
+{Pick up an object if it is in the current room and the player can carry it.}
 var
   carryIndex, carriedCount: Integer;
 begin
@@ -735,6 +760,7 @@ begin
 end;
 
 procedure DropTreasure;
+{Drop all carried treasure in the current room.}
 var
   treasureIndex, treasurePlaced: Integer;
 begin
@@ -766,6 +792,7 @@ begin
 end;
 
 procedure DropObject(obj: Integer);
+{Drop a specific carried object in the current room.}
 begin
   if objectLocation[obj] = -1 then
   begin
@@ -777,6 +804,7 @@ begin
 end;
 
 procedure ShowInventory;
+{List everything the player is carrying (location = -1).}
 var
   itemIndex, carriedFlag: Integer;
 begin
@@ -793,6 +821,7 @@ begin
 end;
 
 procedure AttemptMove(direction: Integer);
+{Try to move in one of the 6 directions.  0=N,1=S,2=E,3=W,4=U,5=D.}
 begin
   if (roomExit[currentRoom, direction] = 0) and (darkFlag = 0) then
   begin
@@ -822,8 +851,10 @@ end;
 
 procedure CalculateScore;
 var
-  i: Integer;
-label EndScore;
+  i, finalScore: Integer;
+label
+  EndScore;
+{Count treasure in storage room, add turn score, print ranking.}
 begin
   finalScore := 0;
   for i := 1 to MaxObjects do
@@ -834,7 +865,7 @@ begin
   if quitFlag = 1 then playerScore := playerScore - 4;
   if playerScore < 0 then playerScore := 0;
   finalScore := finalScore + playerScore;
-  if quitFlag = 1 then goto EndScore;
+
   Writeln('YOUR SCORE IS ', finalScore, ' OUT OF A POSSIBLE ', maxScore);
   if finalScore - playerScore = 300 then goto EndScore;
   Exit;
@@ -950,7 +981,9 @@ end;
 
 procedure ExecuteCommandActions(commandIdx: Integer);
 var
-  actionPos: Integer;
+  actionPos, actionType, actionVal1, actionVal2, tempObjectLoc: Integer;
+{Execute the encoded actions for a matched command record.  Each action is
+stored as 6 characters: type(2) val1(2) val2(2), starting at position 17.}
 begin
   actionPos := 17;
   while actionPos <= 34 do
@@ -960,9 +993,7 @@ begin
     actionVal2 := ExtractNumber(commandTable[commandIdx], actionPos + 4, 2);
 
     if actionType = 1 then
-    begin
       Writeln(messageTable[actionVal1], '.');
-    end;
 
     if actionType = 2 then
     begin
@@ -972,14 +1003,10 @@ begin
     end;
 
     if actionType = 3 then
-    begin
       objectLocation[actionVal1] := 0;
-    end;
 
     if actionType = 4 then
-    begin
       objectLocation[actionVal1] := currentRoom;
-    end;
 
     if actionType = 5 then
     begin
@@ -995,9 +1022,7 @@ begin
     end;
 
     if actionType = 7 then
-    begin
       TakeObject(nounIndex);
-    end;
 
     if actionType = 8 then
     begin
@@ -1012,34 +1037,22 @@ begin
     end;
 
     if actionType = 9 then
-    begin
       objectLocation[actionVal1] := actionVal2;
-    end;
 
     if actionType = 10 then
-    begin
       ShowInventory;
-    end;
 
     if actionType = 77 then
-    begin
       deathHappened := 1;
-    end;
 
     if actionType = 18 then
-    begin
       AttackGhost;
-    end;
 
     if actionType = 11 then
-    begin
       roomChanged := 1;
-    end;
 
     if actionType = 12 then
-    begin
       CalculateScore;
-    end;
 
     if actionType = 13 then
     begin
@@ -1049,86 +1062,95 @@ begin
 
     if actionType = 14 then
     begin
-      readObject := actionVal1;
-      itemActionFlag := 1;
-      if objectLocation[readObject] = -1 then Writeln(messageTable[readObject])
+      if objectLocation[actionVal1] = -1 then Writeln(messageTable[actionVal1])
       else Writeln('I have nothing to read');
     end;
 
     if actionType = 15 then
     begin
-      eatObject := actionVal1;
-      itemActionFlag := 1;
-      if objectLocation[eatObject] = -1 then Writeln('thanks I was hungery')
+      if objectLocation[actionVal1] = -1 then Writeln('thanks I was hungery')
       else Writeln('I have nothing to eat');
     end;
 
     if actionType = 16 then
-    begin
       SaveGame;
-    end;
 
     actionPos := actionPos + 6;
   end;
 end;
 
 procedure FindCommand;
+label
+  ExecuteIt;
 var
-  commandIndex, conditionPos: Integer;
-  condType, condValue: Integer;
-label NextCommand, ExecuteIt;
+  commandIndex, conditionPos, condType, condValue, startIdx, endIdx: Integer;
+  conditionOk: Boolean;
+{Search command table for a record matching verbIndex/nounIndex and satisfying
+all preconditions (object carried, player in room, etc.).}
 begin
   matchFound := 0;
-  conditionCount := 0;
-  commandStart := 1;
-  commandEnd := 53;
+  matchedCommand := 0;
+
   if verbIndex > 17 then
   begin
-    commandStart := 54;
-    commandEnd := MaxCommands;
-  end;
-  for commandIndex := commandStart to commandEnd do
+    startIdx := 54;
+    endIdx := MaxCommands;
+  end
+  else
   begin
-    if ExtractNumber(commandTable[commandIndex], 1, 2) <> verbIndex then Continue;
+    startIdx := 1;
+    endIdx := 53;
+  end;
+
+  commandIndex := startIdx;
+  while commandIndex <= endIdx do
+  begin
+    if ExtractNumber(commandTable[commandIndex], 1, 2) <> verbIndex then
+    begin
+      commandIndex := commandIndex + 1;
+      Continue;
+    end;
     if ExtractNumber(commandTable[commandIndex], 3, 2) <> 0 then
-      if ExtractNumber(commandTable[commandIndex], 3, 2) <> nounIndex then Continue;
-    conditionCount := 0;
+      if ExtractNumber(commandTable[commandIndex], 3, 2) <> nounIndex then
+      begin
+        commandIndex := commandIndex + 1;
+        Continue;
+      end;
+
     matchFound := 1;
+    conditionOk := True;
     conditionPos := 5;
     while conditionPos <= 16 do
     begin
       condType := ExtractNumber(commandTable[commandIndex], conditionPos, 2);
       condValue := ExtractNumber(commandTable[commandIndex], conditionPos + 2, 2);
       if condType = 1 then
-        if objectLocation[condValue] <> -1 then goto NextCommand;
+        if objectLocation[condValue] <> -1 then conditionOk := False;
       if condType = 2 then
-        if currentRoom <> condValue then goto NextCommand;
+        if currentRoom <> condValue then conditionOk := False;
       if condType = 3 then
-        if objectLocation[condValue] <> 0 then goto NextCommand;
+        if objectLocation[condValue] <> 0 then conditionOk := False;
       if condType = 5 then
-        if objectLocation[condValue] <> currentRoom then goto NextCommand;
-      conditionCount := conditionCount + 1;
-      if conditionCount = 3 then
-      begin
-        matchedCommand := commandIndex;
-        goto ExecuteIt;
-      end;
+        if objectLocation[condValue] <> currentRoom then conditionOk := False;
       conditionPos := conditionPos + 4;
     end;
-NextCommand:
+
+    if conditionOk then
+    begin
+      matchedCommand := commandIndex;
+      goto ExecuteIt;
+    end;
+
+    commandIndex := commandIndex + 1;
   end;
+
   if matchFound = 1 then
-  begin
-    Writeln('I CAN''T DO THAT NOW.');
-    Exit;
-  end;
-  Writeln('I DON''T UNDERSTAND?');
+    Writeln('I CAN''T DO THAT NOW.')
+  else
+    Writeln('I DON''T UNDERSTAND?');
   Exit;
+
 ExecuteIt:
-  itemActionFlag := 0;
-  deathHappened := 0;
-  roomFlag := 0;
-  roomChanged := 0;
   ExecuteCommandActions(matchedCommand);
   if deathHappened = 1 then
   begin
@@ -1142,6 +1164,7 @@ ExecuteIt:
 end;
 
 function LocateObjectByKeyword(const aKey: String): Integer;
+{Find object number by its 3-letter keyword, case-insensitive.}
 var
   i: Integer;
 begin
@@ -1156,8 +1179,8 @@ end;
 
 procedure ProcessInput;
 var
-  spacePos: Integer;
   synonymLoop, verbLoop, nounLoop: Integer;
+{Parse the two-word input, resolve synonyms, and dispatch to movement or command table.}
 begin
   if word1 = 'GO' then
   begin
@@ -1211,9 +1234,11 @@ begin
 end;
 
 procedure ShowRoomDescription;
+label
+  ShowDescription;
 var
   printHeader, itemsFound, exitIndex, itemIndex: Integer;
-label ShowDescription;
+{Print room name, visible items, and obvious exits.  Handle darkness.}
 begin
   darkFlag := 0;
   if (currentRoom > deathRoom) and (objectLocation[lightObject] <> -1) and (objectLocation[lightObject] <> currentRoom) then darkFlag := 1;
@@ -1267,6 +1292,7 @@ procedure GameTurn;
 var
   userInput: String;
   spacePos: Integer;
+{One turn: decrement light, random events, read input, parse, execute.}
 begin
   if objectLocation[lightObject] = -1 then lightUnits := lightUnits - 1;
   turnCount := turnCount + 1;
@@ -1299,6 +1325,10 @@ begin
   word2 := UpperCase(word2);
   ProcessInput;
 end;
+
+{------------------------------------------------------------------------------
+  INTRO / TITLE / SETUP
+------------------------------------------------------------------------------}
 
 procedure ShowInstructions;
 begin
@@ -1366,6 +1396,7 @@ begin
 end;
 
 procedure SetupGame;
+{Initialize all game variables to starting values.}
 begin
   Randomize;
   lightObject := 15;
@@ -1389,7 +1420,6 @@ begin
   darkFlag := 0;
   quitFlag := 0;
   gameKilled := 0;
-  commandStart := 1;
 end;
 
 procedure PromptLoadGame;
@@ -1404,6 +1434,10 @@ begin
     LoadGame;
   end;
 end;
+
+{------------------------------------------------------------------------------
+  MAIN
+------------------------------------------------------------------------------}
 
 begin
   InitNouns;
