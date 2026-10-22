@@ -604,8 +604,6 @@ begin
 end;
 
 procedure ProcessRandomEvents;
-label
-  L4030, L3999;
 {Random monster / ghost encounters based on turn count and room.}
 begin
   if (objectLocation[54] = currentRoom) or (objectLocation[55] = currentRoom) or (objectLocation[73] = currentRoom) or (objectLocation[74] = currentRoom) then
@@ -621,32 +619,28 @@ begin
   if ghostActive = 1 then
   begin
     objectLocation[61] := currentRoom;
-    goto L4030;
-  end;
-
-  if RandomRange(32) = 7 then
+    Writeln('There is a threatening little ghost in  the room with you!');
+    ghostFlag := 1 - ghostFlag;
+    if ghostFlag <> 0 then Exit;
+    Writeln('The ghost attacks!');
+    if RandomRange(6) = 2 then
+    begin
+      Writeln('It got you!');
+      currentRoom := limboRoom;
+      ghostActive := 0;
+      gameKilled := 1;
+      Exit;
+    end;
+    Writeln('It missed!');
+  end
+  else if RandomRange(32) = 7 then
   begin
     ghostActive := 1;
-    goto L3999;
-  end;
-
-  objectLocation[61] := 0;
-  Exit;
-L4030:
-  Writeln('There is a threatening little ghost in  the room with you!');
-  ghostFlag := 1 - ghostFlag;
-  if ghostFlag <> 0 then Exit;
-  Writeln('The ghost attacks!');
-  if RandomRange(6) = 2 then
+  end
+  else
   begin
-    Writeln('It got you!');
-    currentRoom := limboRoom;
-    ghostActive := 0;
-    gameKilled := 1;
-    Exit;
+    objectLocation[61] := 0;
   end;
-  Writeln('It missed!');
-L3999:
 end;
 
 procedure AttackGhost;
@@ -885,8 +879,6 @@ end;
 procedure CalculateScore;
 var
   i, finalScore: Integer;
-label
-  EndScore;
 {Count treasure in storage room, add turn score, print ranking.}
 begin
   finalScore := 0;
@@ -904,10 +896,8 @@ begin
 
   Writeln('YOUR SCORE IS ', finalScore, ' OUT OF A POSSIBLE ', maxScore);
 
-  if finalScore - playerScore = 300 then goto EndScore;
+  if finalScore - playerScore <> 300 then Exit;
 
-  Exit;
-EndScore:
   Writeln('You scored ', finalScore, ' points.');
   Writeln('There were ', maxScore, ' points possible.');
 
@@ -1134,16 +1124,16 @@ begin
 end;
 
 procedure FindCommand;
-label
-  ExecuteIt;
 var
   commandIndex, conditionPos, condType, condValue, startIdx, endIdx: Integer;
   conditionOk: Boolean;
+  found: Boolean;
 {Search command table for a record matching verbIndex/nounIndex and satisfying
 all preconditions (object carried, player in room, etc.).}
 begin
   matchFound := 0;
   matchedCommand := 0;
+  found := False;
 
   if verbIndex > 17 then
   begin
@@ -1157,7 +1147,7 @@ begin
   end;
 
   commandIndex := startIdx;
-  while commandIndex <= endIdx do
+  while (commandIndex <= endIdx) and not found do
   begin
     if ExtractNumber(commandTable[commandIndex], 1, 2) <> verbIndex then
     begin
@@ -1198,20 +1188,21 @@ begin
     if conditionOk then
     begin
       matchedCommand := commandIndex;
-      goto ExecuteIt;
-    end;
-
-    commandIndex := commandIndex + 1;
+      found := True;
+    end
+    else
+      commandIndex := commandIndex + 1;
   end;
 
-  if matchFound = 1 then
-    Writeln('I CAN''T DO THAT NOW.')
-  else
-    Writeln('I DON''T UNDERSTAND?');
+  if not found then
+  begin
+    if matchFound = 1 then
+      Writeln('I CAN''T DO THAT NOW.')
+    else
+      Writeln('I DON''T UNDERSTAND?');
+    Exit;
+  end;
 
-  Exit;
-
-ExecuteIt:
   ExecuteCommandActions(matchedCommand);
 
   if deathHappened = 1 then
@@ -1309,8 +1300,6 @@ begin
 end;
 
 procedure ShowRoomDescription;
-label
-  ShowDescription;
 var
   printHeader, itemsFound, exitIndex, itemIndex, lineIndex: Integer;
 {Print room name, visible items, and obvious exits.  Handle darkness.}
@@ -1321,68 +1310,69 @@ begin
 
   if (currentRoom = limboRoom) or (currentRoom = deathRoom) then darkFlag := 0;
 
-  if darkFlag = 0 then goto ShowDescription;
-
-  Writeln('I CAN''T SEE IN THE DARK!');
-  Writeln;
-  Exit;
-
-ShowDescription:
-  if Copy(roomName[currentRoom], 1, 1) = '*' then
-    roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
-
-  Writeln('You''re in ', roomName[currentRoom], '.');
-
-  if currentRoom = deathRoom then
+  if darkFlag = 0 then
   begin
+    if Copy(roomName[currentRoom], 1, 1) = '*' then
+      roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
+
+    Writeln('You''re in ', roomName[currentRoom], '.');
+
+    if currentRoom = deathRoom then
+    begin
+      Writeln;
+      playerScore := playerScore - 12;
+      quitFlag := 1;
+      Exit;
+    end;
+
+    printHeader := 1;
+    itemsFound := 0;
     Writeln;
-    playerScore := playerScore - 12;
-    quitFlag := 1;
-    Exit;
-  end;
 
-  printHeader := 1;
-  itemsFound := 0;
-  Writeln;
-
-  for itemIndex := 1 to MaxObjects do
-  begin
-    if (objectLocation[itemIndex] = currentRoom) and (printHeader = 1) then
+    for itemIndex := 1 to MaxObjects do
     begin
-      Writeln('VISIBLE ITEMS HERE:');
-      printHeader := 0;
-      itemsFound := 1;
+      if (objectLocation[itemIndex] = currentRoom) and (printHeader = 1) then
+      begin
+        Writeln('VISIBLE ITEMS HERE:');
+        printHeader := 0;
+        itemsFound := 1;
+      end;
+
+      if objectLocation[itemIndex] <> currentRoom then Continue;
+
+      Writeln(objectName[itemIndex], '.  ');
     end;
 
-    if objectLocation[itemIndex] <> currentRoom then Continue;
+    if itemsFound <> 0 then Writeln;
 
-    Writeln(objectName[itemIndex], '.  ');
-  end;
+    printHeader := 1;
+    Writeln;
 
-  if itemsFound <> 0 then Writeln;
-
-  printHeader := 1;
-  Writeln;
-
-  for exitIndex := 0 to 5 do
-  begin
-    if (roomExit[currentRoom, exitIndex] <> 0) and (printHeader = 1) then
+    for exitIndex := 0 to 5 do
     begin
-      Writeln('OBVIOUS EXITS:');
-      printHeader := 0;
+      if (roomExit[currentRoom, exitIndex] <> 0) and (printHeader = 1) then
+      begin
+        Writeln('OBVIOUS EXITS:');
+        printHeader := 0;
+      end;
+
+      if roomExit[currentRoom, exitIndex] <> 0 then Write(verbTable[exitIndex + 1], ' ');
     end;
 
-    if roomExit[currentRoom, exitIndex] <> 0 then Write(verbTable[exitIndex + 1], ' ');
+    Writeln;
+
+    // Horizontal underscore line matching console width
+    for lineIndex := 1 to ConsoleWidth do
+      Write('_');
+
+    Writeln;
+    Writeln;
+  end
+  else
+  begin
+    Writeln('I CAN''T SEE IN THE DARK!');
+    Writeln;
   end;
-
-  Writeln;
-
-  // Horizontal underscore line matching console width
-  for lineIndex := 1 to ConsoleWidth do
-    Write('_');
-
-  Writeln;
-  Writeln;
 end;
 
 procedure GameTurn;
