@@ -981,6 +981,9 @@ begin
   Writeln('Game loaded.');
 end;
 
+{ Forward declaration so ExecuteCommandActions can call LocateObjectByKeyword }
+function LocateObjectByKeyword(const aKey: String): Integer; forward;
+
 procedure ExecuteCommandActions(commandIdx: Integer);
 var
   actionPos, actionType, actionVal1, actionVal2, tempObjectLoc: Integer;
@@ -1024,7 +1027,7 @@ begin
     end;
 
     if actionType = 7 then
-      TakeObject(nounIndex);
+      TakeObject(LocateObjectByKeyword(nounPrefix));
 
     if actionType = 8 then
     begin
@@ -1032,7 +1035,7 @@ begin
       begin
         if word2 = '' then Writeln('be specific')
         else
-          DropObject(nounIndex);
+          DropObject(LocateObjectByKeyword(nounPrefix));
       end
       else
         DropTreasure;
