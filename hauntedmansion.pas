@@ -1132,6 +1132,9 @@ begin
 
       16:
         SaveGame;
+
+      17:
+         roomExit[currentRoom, actionVal1] := actionVal2;
     end;
 
     actionPos := actionPos + 6;
