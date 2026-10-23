@@ -766,7 +766,8 @@ begin
 
   carriedCount := 0;
   for carryIndex := 1 to MaxObjects do
-    if objectLocation[carryIndex] = -1 then carriedCount := carriedCount + 1;
+    if objectLocation[carryIndex] = -1 then
+       Inc(carriedCount);
 
   if carriedCount + 1 > objectLimit then
   begin
@@ -966,7 +967,7 @@ end;
 procedure SaveGame;
 var
   f: TextFile;
-  i: Integer;
+  i, j: Integer;
 begin
   Assign(f, 'advent.sav');
   Rewrite(f);
@@ -978,8 +979,15 @@ begin
   Writeln(f, ghostCount);
   Writeln(f, ghostActive);
   Writeln(f, ghostFlag);
+
   for i := 1 to MaxObjects do
     Writeln(f, objectLocation[i]);
+
+  { Save the dynamic room-exit table (e.g. opened mansion door) }
+  for i := 0 to MaxRooms do
+    for j := 0 to 5 do
+      Writeln(f, roomExit[i, j]);
+
   Close(f);
   Writeln('Game saved.');
 end;
@@ -987,7 +995,7 @@ end;
 procedure LoadGame;
 var
   f: TextFile;
-  i, tempValue: Integer;
+  i, j, tempValue: Integer;
 begin
   if not FileExists('advent.sav') then
   begin
@@ -1011,6 +1019,14 @@ begin
     ReadLn(f, tempValue);
     objectLocation[i] := tempValue;
   end;
+
+  { Restore the dynamic room-exit table }
+  for i := 0 to MaxRooms do
+    for j := 0 to 5 do
+    begin
+      ReadLn(f, tempValue);
+      roomExit[i, j] := tempValue;
+    end;
 
   Close(f);
   Writeln('Game loaded.');
@@ -1150,14 +1166,14 @@ begin
   begin
     if ExtractNumber(commandTable[commandIndex], 1, 2) <> verbIndex then
     begin
-      commandIndex := commandIndex + 1;
+      Inc(commandIndex);
       Continue;
     end;
 
     if ExtractNumber(commandTable[commandIndex], 3, 2) <> 0 then
       if ExtractNumber(commandTable[commandIndex], 3, 2) <> nounIndex then
       begin
-        commandIndex := commandIndex + 1;
+        Inc(commandIndex);
         Continue;
       end;
 
@@ -1190,7 +1206,7 @@ begin
       found := True;
     end
     else
-      commandIndex := commandIndex + 1;
+      Inc(commandIndex);
   end;
 
   if not found then
@@ -1385,7 +1401,7 @@ var
 begin
   if objectLocation[lightObject] = -1 then lightUnits := lightUnits - 1;
 
-  turnCount := turnCount + 1;
+  Inc(turnCount);
 
   CheckLight;
   ProcessRandomEvents;
@@ -1399,7 +1415,7 @@ begin
   end;
 
   Writeln;
-  Write('WHAT NEXT  >');
+  Write('WHAT NEXT?  >');
   ReadLn(userInput);
 
   rawInput := userInput;
@@ -1459,20 +1475,20 @@ begin
   ClrScr;
 
   Writeln('       Words to Know                 ');
-  Writeln('READ - if you have something that can be       read you will read it.');
-  Writeln('ENTER - will take you into a hole,              passage, building, etc..');
-  Writeln('INVENTORY - gives you list of what you              are carrying.');
-  Writeln('LOOK - describes the room you are in.');
+  Writeln('READ      - if you have something that can be read, you will read it.');
+  Writeln('ENTER     - will take you into a hole, passage, building, etc..');
+  Writeln('INVENTORY - gives you list of what you are carrying.');
+  Writeln('LOOK      - describes the room you are in.');
   Writeln;
 
-  Writeln('Use TAKE and DROP in most cases to      manipulate objects.');
+  Writeln('Use TAKE and DROP in most cases to manipulate objects.');
   Writeln;
 
-  Writeln('There are many more words that will be  discovered as you explore some may');
+  Writeln('There are many more words that will be discovered as you explore some may');
   Writeln('even be magic, usually when you tell me things you should use two words.');
   Writeln;
 
-  Writeln('If you find one word doesn''t work just  try another.');
+  Writeln('If you find one word doesn''t work just try another.');
   Writeln;
 
   Writeln('Please wait while I load my data...');
