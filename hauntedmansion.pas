@@ -1023,8 +1023,20 @@ begin
   Writeln('Game loaded.');
 end;
 
-{ Forward declaration so ExecuteCommandActions can call LocateObjectByKeyword }
-function LocateObjectByKeyword(const aKey: String): Integer; forward;
+function LocateObjectByKeyword(const aKey: String): Integer;
+{Find object number by its 3-letter keyword, case-insensitive.}
+var
+  i: Integer;
+begin
+  for i := 1 to MaxObjects do
+    if UpperCase(objectKeyword[i]) = UpperCase(aKey) then
+    begin
+      LocateObjectByKeyword := i;
+      Exit;
+    end;
+
+  LocateObjectByKeyword := 0;
+end;
 
 procedure ExecuteCommandActions(commandIdx: Integer);
 var
@@ -1217,21 +1229,6 @@ begin
   begin
     Exit;
   end;
-end;
-
-function LocateObjectByKeyword(const aKey: String): Integer;
-{Find object number by its 3-letter keyword, case-insensitive.}
-var
-  i: Integer;
-begin
-  for i := 1 to MaxObjects do
-    if UpperCase(objectKeyword[i]) = UpperCase(aKey) then
-    begin
-      LocateObjectByKeyword := i;
-      Exit;
-    end;
-
-  LocateObjectByKeyword := 0;
 end;
 
 procedure ProcessInput;
