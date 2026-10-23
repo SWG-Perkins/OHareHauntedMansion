@@ -1,7 +1,6 @@
 program OHARES3;
 
 {$mode objfpc}{$H+}
-
 uses
   SysUtils, StrUtils, Crt;
 
@@ -77,6 +76,7 @@ procedure WaitForKey;
 var
   ch: Char;
 begin
+  Writeln;
   Write('Hit any key to continue ... ');
   ch := ReadKey;
   Writeln;
@@ -1396,7 +1396,7 @@ begin
   end;
 
   Writeln;
-  Write('WHAT NEXT   ');
+  Write('WHAT NEXT  >');
   ReadLn(userInput);
 
   rawInput := userInput;
@@ -1449,7 +1449,8 @@ begin
   Writeln;
 
   Writeln('inventory, save game, drop treasure');
-  Writeln('hit any key to continue');
+  Writeln;
+  Writeln('Hit any key to continue ...');
 
   ReadKey;
   ClrScr;
@@ -1478,32 +1479,42 @@ procedure ShowTitleScreen;
 begin
   ClrScr;
 
-  Writeln('                adventure  ');
-  Writeln('      N  N        M        -by-     ');
-  Writeln('     N  N      M     john o''hare ');
-  Writeln('    N  N        M');
-  Writeln('   N  N              M      VVVVVVV');
-  Writeln('  N  N              M    VVMVVVNVV');
-  Writeln('  P          VVVVVVVVV');
-  Writeln('            VVVMNMNMVV');
-  Writeln(' PP L     VVVVVVVVV');
-  Writeln(' P  M               M    V  M N V');
-  Writeln('     M               M  N   ');
-  Writeln('M   OOPP      ');
-  Writeln('PPPP   O        ');
-  Writeln('   .       ');
-  Writeln('L L     ');
-  Writeln(' MM           M      ');
-  Writeln('  PMOPOP     NVM');
-  Writeln('      PPPPPPPPPPPOOOOO   ');
-  Writeln('                  MM');
-  Writeln('                    ');
-  Writeln('                   M M');
-  Writeln('  ');
+  //Writeln('                adventure  ');
+  //Writeln('      N  N        M        -by-     ');
+  //Writeln('     N  N      M     john o''hare ');
+  //Writeln('    N  N        M');
+  //Writeln('   N  N              M      VVVVVVV');
+  //Writeln('  N  N              M    VVMVVVNVV');
+  //Writeln('  P          VVVVVVVVV');
+  //Writeln('            VVVMNMNMVV');
+  //Writeln(' PP L     VVVVVVVVV');
+  //Writeln(' P  M               M    V  M N V');
+  //Writeln('     M               M  N   ');
+  //Writeln('M   OOPP      ');
+  //Writeln('PPPP   O        ');
+  //Writeln('   .       ');
+  //Writeln('L L     ');
+  //Writeln(' MM           M      ');
+  //Writeln('  PMOPOP     NVM');
+  //Writeln('      PPPPPPPPPPPOOOOO   ');
+  //Writeln('                  MM');
+  //Writeln('                    ');
+  //Writeln('                   M M');
+  //Writeln('  ');
+  //Writeln;
+  //
+  //Writeln('    hit any key to begin adventure');
+
+  Writeln(' ADVENTURE 3:  The Haunted Mansion');
+  Writeln('             -BY-');
+  Writeln('          JOHN O''HARE');
   Writeln;
-
-  Writeln('    hit any key to begin adventure');
-
+  Writeln('       Pascal conversion');
+  Writeln('              by');
+  Writeln('          SWG-Perkins');
+  Writeln;
+  Writeln;
+  Writeln('Hit any key to begin adventure');
   ReadKey;
 end;
 
@@ -1564,7 +1575,6 @@ end;
 {------------------------------------------------------------------------------
   MAIN
 ------------------------------------------------------------------------------}
-
 begin
   InitNouns;
   InitVerbs;
