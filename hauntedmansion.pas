@@ -879,7 +879,6 @@ end;
 procedure CalculateScore;
 var
   i, finalScore: Integer;
-{Count treasure in storage room, add turn score, print ranking.}
 begin
   finalScore := 0;
   for i := 1 to MaxObjects do
@@ -896,7 +895,8 @@ begin
 
   Writeln('YOUR SCORE IS ', finalScore, ' OUT OF A POSSIBLE ', maxScore);
 
-  if finalScore - playerScore <> 300 then Exit;
+  { Always show detailed score when quitting; otherwise only when all treasures found }
+  if (quitFlag <> 1) and (finalScore - playerScore <> 300) then Exit;
 
   Writeln('You scored ', finalScore, ' points.');
   Writeln('There were ', maxScore, ' points possible.');
@@ -904,62 +904,62 @@ begin
   if finalScore < 1 then
   begin
     Writeln('You must have nothing but space between your ears!');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 51 then
   begin
     Writeln('You are obviously a rank amateur.');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 75 then
   begin
     Writeln('Your score qualifies you as a novice class adventurer.');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 125 then
   begin
     Writeln('You''ve achieved the rating: Experienced Adventurer');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 175 then
   begin
     Writeln('You have reached the ''junior master'' status.');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 225 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -D-');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 295 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -C-');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 345 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -B-');
-    Halt;
+    Exit;
   end;
 
   if finalScore < 350 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -A-');
-    Halt;
+    Exit;
   end;
 
   if finalScore = maxScore then
   begin
     Writeln('All of adventuredom gives tribute');
     Writeln('to you, ADVENTURER GRAND MASTER!');
-    Halt;
+    Exit;
   end;
 end;
 
@@ -1650,5 +1650,7 @@ begin
 
   Writeln;
   Writeln('Thanks for playing Adventure 1.5!');
+  Writeln;
+  WaitForKey;
 end.
 
