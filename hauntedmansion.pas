@@ -1304,6 +1304,7 @@ end;
 procedure ShowRoomDescription;
 var
   printHeader, itemsFound, exitIndex, itemIndex, lineIndex: Integer;
+  displayName: String;
 {Print room name, visible items, and obvious exits.  Handle darkness.}
 begin
   darkFlag := 0;
@@ -1314,13 +1315,15 @@ begin
 
   if darkFlag = 0 then
   begin
-    if Copy(roomName[currentRoom], 1, 1) = '*' then
+    displayName := roomName[currentRoom];
+
+    if Copy(displayName, 1, 1) = '*' then
     begin
-      roomName[currentRoom] := Copy(roomName[currentRoom], 2, Length(roomName[currentRoom]) - 1);
-      Writeln(roomName[currentRoom], '.');
+      displayName := Copy(displayName, 2, Length(displayName) - 1);
+      Writeln(displayName, '.');
     end
     else
-      Writeln('You''re in ', roomName[currentRoom], '.');
+      Writeln('You''re in ', displayName, '.');
 
     if currentRoom = deathRoom then
     begin
