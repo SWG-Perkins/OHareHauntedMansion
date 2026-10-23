@@ -906,57 +906,48 @@ begin
   begin
     Writeln('You must have nothing but space between your ears!');
     Exit;
-  end;
-
-  if finalScore < 51 then
+  end
+  else if finalScore < 51 then
   begin
     Writeln('You are obviously a rank amateur.');
     Exit;
-  end;
-
-  if finalScore < 75 then
+  end
+  else if finalScore < 75 then
   begin
     Writeln('Your score qualifies you as a novice class adventurer.');
     Exit;
-  end;
-
-  if finalScore < 125 then
+  end
+  else if finalScore < 125 then
   begin
     Writeln('You''ve achieved the rating: Experienced Adventurer');
     Exit;
-  end;
-
-  if finalScore < 175 then
+  end
+  else if finalScore < 175 then
   begin
     Writeln('You have reached the ''junior master'' status.');
     Exit;
-  end;
-
-  if finalScore < 225 then
+  end
+  else if finalScore < 225 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -D-');
     Exit;
-  end;
-
-  if finalScore < 295 then
+  end
+  else if finalScore < 295 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -C-');
     Exit;
-  end;
-
-  if finalScore < 345 then
+  end
+  else if finalScore < 345 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -B-');
     Exit;
-  end;
-
-  if finalScore < 350 then
+  end
+  else if finalScore < 350 then
   begin
     Writeln('Your score puts you in MASTER ADVENTURER class -A-');
     Exit;
-  end;
-
-  if finalScore = maxScore then
+  end
+  else if finalScore = maxScore then
   begin
     Writeln('All of adventuredom gives tribute');
     Writeln('to you, ADVENTURER GRAND MASTER!');
@@ -1038,8 +1029,6 @@ function LocateObjectByKeyword(const aKey: String): Integer; forward;
 procedure ExecuteCommandActions(commandIdx: Integer);
 var
   actionPos, actionType, actionVal1, actionVal2, tempObjectLoc: Integer;
-{Execute the encoded actions for a matched command record.  Each action is
-stored as 6 characters: type(2) val1(2) val2(2), starting at position 17.}
 begin
   actionPos := 17;
   while actionPos <= 34 do
@@ -1048,91 +1037,90 @@ begin
     actionVal1 := ExtractNumber(commandTable[commandIdx], actionPos + 2, 2);
     actionVal2 := ExtractNumber(commandTable[commandIdx], actionPos + 4, 2);
 
-    if actionType = 1 then
-      Writeln(messageTable[actionVal1], '.');
+    case actionType of
+      1:
+        Writeln(messageTable[actionVal1], '.');
 
-    if actionType = 2 then
-    begin
-      tempObjectLoc := objectLocation[actionVal1];
-      objectLocation[actionVal1] := objectLocation[actionVal2];
-      objectLocation[actionVal2] := tempObjectLoc;
-    end;
-
-    if actionType = 3 then
-      objectLocation[actionVal1] := 0;
-
-    if actionType = 4 then
-      objectLocation[actionVal1] := currentRoom;
-
-    if actionType = 5 then
-    begin
-      currentRoom := actionVal1;
-      roomChanged := 1;
-    end;
-
-    if actionType = 6 then
-    begin
-      deathHappened := 1;
-      currentRoom := limboRoom;
-      playerScore := playerScore - 5;
-    end;
-
-    if actionType = 7 then
-      TakeObject(LocateObjectByKeyword(nounPrefix));
-
-    if actionType = 8 then
-    begin
-      if nounPrefix <> 'TRE' then
+      2:
       begin
-        if word2 = '' then Writeln('be specific')
+        tempObjectLoc := objectLocation[actionVal1];
+        objectLocation[actionVal1] := objectLocation[actionVal2];
+        objectLocation[actionVal2] := tempObjectLoc;
+      end;
+
+      3:
+        objectLocation[actionVal1] := 0;
+
+      4:
+        objectLocation[actionVal1] := currentRoom;
+
+      5:
+      begin
+        currentRoom := actionVal1;
+        roomChanged := 1;
+      end;
+
+      6:
+      begin
+        deathHappened := 1;
+        currentRoom := limboRoom;
+        playerScore := playerScore - 5;
+      end;
+
+      7:
+        TakeObject(LocateObjectByKeyword(nounPrefix));
+
+      8:
+      begin
+        if nounPrefix <> 'TRE' then
+        begin
+          if word2 = '' then Writeln('be specific')
+          else
+            DropObject(LocateObjectByKeyword(nounPrefix));
+        end
         else
-          DropObject(LocateObjectByKeyword(nounPrefix));
-      end
-      else
-        DropTreasure;
+          DropTreasure;
+      end;
+
+      9:
+        objectLocation[actionVal1] := actionVal2;
+
+      10:
+        ShowInventory;
+
+      77:
+        deathHappened := 1;
+
+      18:
+        AttackGhost;
+
+      11:
+        roomChanged := 1;
+
+      12:
+        CalculateScore;
+
+      13:
+      begin
+        quitFlag := 1;
+        CalculateScore;
+      end;
+
+      14:
+      begin
+        if objectLocation[actionVal1] = -1 then Writeln(messageTable[actionVal1])
+        else Writeln('I have nothing to read');
+      end;
+
+      15:
+      begin
+        if objectLocation[actionVal1] = -1 then Writeln('thanks I was hungery')
+        else Writeln('I have nothing to eat');
+      end;
+
+      16:
+        SaveGame;
     end;
-
-    if actionType = 9 then
-      objectLocation[actionVal1] := actionVal2;
-
-    if actionType = 10 then
-      ShowInventory;
-
-    if actionType = 77 then
-      deathHappened := 1;
-
-    if actionType = 18 then
-      AttackGhost;
-
-    if actionType = 11 then
-      roomChanged := 1;
-
-    if actionType = 12 then
-      CalculateScore;
-
-    if actionType = 13 then
-    begin
-      quitFlag := 1;
-      CalculateScore;
-    end;
-
-    if actionType = 14 then
-    begin
-      if objectLocation[actionVal1] = -1 then Writeln(messageTable[actionVal1])
-      else Writeln('I have nothing to read');
-    end;
-
-    if actionType = 15 then
-    begin
-      if objectLocation[actionVal1] = -1 then Writeln('thanks I was hungery')
-      else Writeln('I have nothing to eat');
-    end;
-
-    if actionType = 16 then
-      SaveGame;
-
-    if actionType = 17 then
-      roomExit[currentRoom, actionVal1] := actionVal2;
 
     actionPos := actionPos + 6;
   end;
@@ -1185,17 +1173,16 @@ begin
       condType := ExtractNumber(commandTable[commandIndex], conditionPos, 2);
       condValue := ExtractNumber(commandTable[commandIndex], conditionPos + 2, 2);
 
-      if condType = 1 then
-        if objectLocation[condValue] <> -1 then conditionOk := False;
-
-      if condType = 2 then
-        if currentRoom <> condValue then conditionOk := False;
-
-      if condType = 3 then
-        if objectLocation[condValue] <> 0 then conditionOk := False;
-
-      if condType = 5 then
-        if objectLocation[condValue] <> currentRoom then conditionOk := False;
+      case condType of
+        1:
+          if objectLocation[condValue] <> -1 then conditionOk := False;
+        2:
+          if currentRoom <> condValue then conditionOk := False;
+        3:
+          if objectLocation[condValue] <> 0 then conditionOk := False;
+        5:
+          if objectLocation[condValue] <> currentRoom then conditionOk := False;
+      end;
 
       conditionPos := conditionPos + 4;
     end;
