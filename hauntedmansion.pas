@@ -1115,6 +1115,9 @@ begin
     if actionType = 16 then
       SaveGame;
 
+    if actionType = 17 then
+      roomExit[currentRoom, actionVal1] := actionVal2;
+
     actionPos := actionPos + 6;
   end;
 end;
