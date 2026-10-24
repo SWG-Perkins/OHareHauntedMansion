@@ -225,7 +225,7 @@ begin
   roomName[37] := 'a laundry room';
   roomExit[37,0] := 0; roomExit[37,1] := 0; roomExit[37,2] := 36; roomExit[37,3] := 38; roomExit[37,4] := 0; roomExit[37,5] := 0;
 
-  roomName[38] := 'a musty, old room in the      basement';
+  roomName[38] := 'a musty, old room in the basement';
   roomExit[38,0] := 0; roomExit[38,1] := 39; roomExit[38,2] := 37; roomExit[38,3] := 0; roomExit[38,4] := 0; roomExit[38,5] := 0;
 
   roomName[39] := 'an old wine cellar';
@@ -246,10 +246,10 @@ begin
   roomName[44] := 'a large circular chamber';
   roomExit[44,0] := 45; roomExit[44,1] := 0; roomExit[44,2] := 46; roomExit[44,3] := 43; roomExit[44,4] := 0; roomExit[44,5] := 0;
 
-  roomName[45] := 'a splendid chamber 30 feet    high';
+  roomName[45] := 'a splendid chamber 30 feet high';
   roomExit[45,0] := 47; roomExit[45,1] := 44; roomExit[45,2] := 0; roomExit[45,3] := 0; roomExit[45,4] := 0; roomExit[45,5] := 0;
 
-  roomName[46] := 'a roughly carved room, a pit  leads down';
+  roomName[46] := 'a roughly carved room, a pit leads down';
   roomExit[46,0] := 0; roomExit[46,1] := 52; roomExit[46,2] := 0; roomExit[46,3] := 44; roomExit[46,4] := 0; roomExit[46,5] := 53;
 
   roomName[47] := '*You''re at a junction of three passages';
@@ -276,13 +276,13 @@ begin
   roomName[54] := 'a pit';
   roomExit[54,0] := 0; roomExit[54,1] := 0; roomExit[54,2] := 0; roomExit[54,3] := 0; roomExit[54,4] := 0; roomExit[54,5] := 55;
 
-  roomName[55] := 'a pit.  There are no exits';
+  roomName[55] := 'a pit. There are no exits';
   roomExit[55,0] := 0; roomExit[55,1] := 0; roomExit[55,2] := 0; roomExit[55,3] := 0; roomExit[55,4] := 0; roomExit[55,5] := 0;
 
   roomName[56] := 'a dead end passage';
   roomExit[56,0] := 0; roomExit[56,1] := 0; roomExit[56,2] := 47; roomExit[56,3] := 0; roomExit[56,4] := 0; roomExit[56,5] := 0;
 
-  roomName[57] := ' a misty room with strange    looking exits'; // LIMBO
+  roomName[57] := ' a misty room with strange-looking exits'; // LIMBO
   roomExit[57,0] := 1; roomExit[57,1] := 58; roomExit[57,2] := 58; roomExit[57,3] := 58; roomExit[57,4] := 5; roomExit[57,5] := 58;
 
   roomName[58] := ' H E L L '; // DEATH
@@ -1620,13 +1620,6 @@ begin
     begin
       CalculateScore;
       Break;
-    end;
-
-    if currentRoom = limboRoom then
-    begin
-      currentRoom := 1;
-      playerScore := playerScore - 5;
-      displayRoom := True;      // arriving in limbo sends you to room 1; show it
     end;
 
     if displayRoom then
